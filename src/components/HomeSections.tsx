@@ -120,7 +120,7 @@ export function Catalogo({
               >
                 <article data-buy={p.slug} className="card flex h-full flex-col overflow-hidden">
                   {p.main_image && (
-                    <div className="photo-frame m-3 mb-0 aspect-square select-none !rounded-3xl bg-blush-50 ring-1 ring-white/70">
+                    <div className="photo-frame m-2 mb-0 aspect-square select-none !rounded-3xl bg-blush-50 ring-1 ring-white/70">
                       <Image
                         src={p.main_image}
                         alt={p.name}
@@ -138,22 +138,40 @@ export function Catalogo({
                       <span className="absolute right-3 top-3">
                         <LikeButton slug={p.slug} count={likes[p.slug] ?? 0} />
                       </span>
+                      <span className="absolute left-2 top-1/2 z-10 -translate-y-1/2">
+                        <button
+                          onClick={() => go(-1)}
+                          aria-label="Producto anterior"
+                          className="grid h-8 w-8 place-items-center rounded-full bg-white/85 text-sm text-cocoa-900 shadow-card backdrop-blur transition hover:text-brand-600 active:scale-90"
+                        >
+                          ←
+                        </button>
+                      </span>
+                      <span className="absolute right-2 top-1/2 z-10 -translate-y-1/2">
+                        <button
+                          onClick={() => go(1)}
+                          aria-label="Siguiente producto"
+                          className="grid h-8 w-8 place-items-center rounded-full bg-white/85 text-sm text-cocoa-900 shadow-card backdrop-blur transition hover:text-brand-600 active:scale-90"
+                        >
+                          →
+                        </button>
+                      </span>
                     </div>
                   )}
 
-                  <div className="flex flex-1 flex-col p-5">
+                  <div className="flex flex-1 flex-col p-4">
                     <p className="text-[11.5px] font-bold uppercase tracking-[0.2em] text-brand-500">
                       {p.subtitle}
                     </p>
-                    <h3 className="mt-1.5 font-serif text-[22px] font-bold leading-snug text-cocoa-900">
+                    <h3 className="mt-1 font-serif text-[22px] font-bold leading-snug text-cocoa-900">
                       {p.name}
                     </h3>
-                    <p className="mt-2 text-[14.5px] leading-relaxed text-cocoa-800/75">
+                    <p className="mt-1.5 text-[14.5px] leading-relaxed text-cocoa-800/75">
                       {p.description}
                     </p>
 
                     {p.includes.length > 0 && (
-                      <ul className="mt-3 space-y-1.5 rounded-2xl bg-brand-50/70 p-4">
+                      <ul className="mt-2.5 space-y-1.5 rounded-2xl bg-brand-50/70 p-3">
                         {p.includes.map((inc) => (
                           <li key={inc} className="text-[13.5px] font-medium text-cocoa-900/85">
                             {inc}
@@ -162,7 +180,7 @@ export function Catalogo({
                       </ul>
                     )}
 
-                    <div className="mb-4 mt-4 flex items-end justify-between gap-3 border-t border-blush-100 pt-4">
+                    <div className="mb-3 mt-3 flex items-end justify-between gap-3 border-t border-blush-100 pt-3">
                       <div>
                         {p.price != null && (
                           <p className="font-serif text-[26px] font-bold leading-none text-cocoa-900">
@@ -182,8 +200,9 @@ export function Catalogo({
                       href={productLink(p, waNumber, waMessage)}
                       target="_blank"
                       rel="noopener"
-                      className="btn-primary mt-auto w-full !px-5 !py-3.5 !text-[15px]"
+                      className="btn-wa mt-auto w-full"
                     >
+                      <WaBtnIcon />
                       {p.cta_label || "Mándame mensaje"}
                     </a>
                   </div>
@@ -193,7 +212,7 @@ export function Catalogo({
           })}
         </div>
 
-        <div className="mt-3 flex items-center justify-between gap-3">
+        <div className="mt-3 flex items-center justify-center">
           <div className="glass flex items-center gap-2.5 rounded-full px-4 py-2.5">
             <div className="flex items-center gap-1.5" aria-hidden>
               {products.map((p, d) => (
@@ -209,25 +228,17 @@ export function Catalogo({
               {index + 1} de {total}
             </span>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => go(-1)}
-              aria-label="Productos anteriores"
-              className="glass grid h-10 w-10 place-items-center rounded-full text-lg text-cocoa-900 shadow-card transition hover:text-brand-600 active:scale-90"
-            >
-              ←
-            </button>
-            <button
-              onClick={() => go(1)}
-              aria-label="Más productos"
-              className="glass grid h-10 w-10 place-items-center rounded-full text-lg text-cocoa-900 shadow-card transition hover:text-brand-600 active:scale-90"
-            >
-              →
-            </button>
-          </div>
         </div>
       </div>
     </section>
+  );
+}
+
+function WaBtnIcon() {
+  return (
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.2 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.4-.7-2.9-1.2-4.7-4.1-4.9-4.3-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5s.8 1.9.8 2c.1.1.1.3 0 .5-.3.6-.6.8-.4 1.1.6 1.1 1.4 1.8 2.5 2.4.3.1.5 0 .7-.2l.8-.9c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3 0 .2 0 .7-.6 1.8Z" />
+    </svg>
   );
 }
 
