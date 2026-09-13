@@ -1,15 +1,36 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { supabaseBrowser, hasSupabaseEnv } from "@/lib/supabaseClient";
-import { loginToEmail } from "@/lib/site";
+import { useEffect, useState } from "react";
 
 const linesToList = (t: string) => t.split("\n").map((s) => s.trim()).filter(Boolean);
 const listToLines = (a: string[] = []) => a.join("\n");
-const slugify = (s: string) =>
-  s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
-type Row = Record<string, unknown>;
+type Product = {
+  id: string;
+  slug: string;
+  name: string;
+  subtitle: string;
+  description: string;
+  price: number | null;
+  main_image: string;
+  gallery: string[];
+  ingredients: string[];
+  details: { label: string; value: string }[];
+  includes: string[];
+  cta_label: string;
+  wa_message: string;
+  visible: boolean;
+  sort_order: number;
+  [k: string]: unknown;
+};
+
+type Settings = {
+  brand_name: string;
+  whatsapp_number: string;
+  whatsapp_message: string;
+  instagram: string;
+  footer_text: string;
+};
 
 const EMPTY = {
   name: "",
@@ -19,22 +40,18 @@ const EMPTY = {
   contenido: "",
   includes: "",
   cta_label: "",
-  wa_message: "",
-  visible: true,
-  sort_order: 0,
 };
 
 export default function AdminPage() {
-  const envOk = useMemo(() => hasSupabaseEnv(), []);
-  const [sb] = useState(() => (envOk ? supabaseBrowser() : null));
-  const [session, setSession] = useState<unknown>(null);
-  const [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(true);
+  const [logged, setLogged] = useState(false);
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [products, setProducts] = useState<Row[]>([]);
-  const [settings, setSettings] = useState<Row | null>(null);
-  const [editing, setEditing] = useState<Row | null>(null);
+  const [ok, setOk] = useState("");
+  const [products, setProducts] = useState<Product[]>([]);
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
@@ -42,174 +59,211 @@ export default function AdminPage() {
   const [tab, setTab] = useState<"products" | "settings">("products");
 
   useEffect(() => {
-    if (!sb) {
-      setLoading(false);
-      return;
-    }
-    sb.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
-    const { data: sub } = sb.auth.onAuthStateChange((_e, s) => setSession(s));
-    return () => sub.subscription.unsubscribe();
-  }, [sb]);
-
-  useEffect(() => {
-    if (session && sb) loadAll();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session]);
+    fetch("/api/admin/me")
+      .then((r) => setLogged(r.ok))
+      .catch(() => setLogged(false))
+      .finally(() => setChecking(false));
+  }, []);
 
   async function loadAll() {
-    if (!sb) return;
-    const [p, s] = await Promise.all([
-      sb.from("products").select("*").order("sort_order"),
-      sb.from("site_settings").select("*").eq("id", 1).maybeSingle(),
-    ]);
-    if (p.data) setProducts(p.data);
-    if (s.data) setSettings(s.data);
+    const r = await fetch("/api/admin/data");
+    if (!r.ok) {
+      setLogged(false);
+      return;
+    }
+    const d = await r.json();
+    setProducts((d.products ?? []).sort((a: Product, b: Product) => a.sort_order - b.sort_order));
+    setSettings(d.settings);
   }
+
+  useEffect(() => {
+    if (logged) loadAll();
+  }, [logged ]);
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
-    if (!sb) return;
     setError("");
-    const { error } = await sb.auth.signInWithPassword({
-      email: loginToEmail(user),
-      password,
+    const r = await fetch("/api/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user, password }),
     });
-    if (error) setError("Usuario o contraseña incorrectos. Intenta de nuevo 💗");
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      setError(d.error ?? "No se pudo entrar");
+      return;
+    }
+    setPassword("");
+    setLogged(true);
   }
 
-  function firstDetail(p: Row): string {
-    const d = p.details as { label: string; value: string }[] | undefined;
-    return d && d.length > 0 ? d[0].value : "";
+  async function logout() {
+    await fetch("/api/admin/me", { method: "POST" });
+    setLogged(false);
+  }
+
+  function firstDetail(p: Product): string {
+    return p.details && p.details.length > 0 ? p.details[0].value : "";
   }
 
   function startNew() {
-    setEditing(null);
-    setForm({ ...EMPTY, sort_order: products.length + 1, cta_label: "Mándame mensaje" });
+    setEditingId(null);
+    setForm({ ...EMPTY, cta_label: "Mándame mensaje" });
     setShowForm(true);
+    setError("");
+    setOk("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function startEdit(p: Row) {
-    setEditing(p);
+  function startEdit(p: Product) {
+    setEditingId(p.id);
     setForm({
-      name: String(p.name ?? ""),
+      name: p.name,
       price: p.price == null ? "" : String(p.price),
-      main_image: String(p.main_image ?? ""),
-      description: String(p.description ?? ""),
+      main_image: p.main_image,
+      description: p.description,
       contenido: firstDetail(p),
-      includes: listToLines((p.includes as string[]) ?? []),
-      cta_label: String((p.cta_label as string) ?? "") || "Mándame mensaje",
-      wa_message: String((p.wa_message as string) ?? ""),
-      visible: (p.visible as boolean) !== false,
-      sort_order: Number(p.sort_order ?? 0),
+      includes: listToLines(p.includes),
+      cta_label: p.cta_label || "Mándame mensaje",
     });
     setShowForm(true);
+    setError("");
+    setOk("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  async function uploadImage(file: File): Promise<string> {
-    if (!sb) return "";
+  function fileToDataUrl(file: File): Promise<string> {
+    return new Promise((res, rej) => {
+      const r = new FileReader();
+      r.onload = () => res(String(r.result));
+      r.onerror = rej;
+      r.readAsDataURL(file);
+    });
+  }
+
+  async function uploadImage(file: File) {
     setUploading(true);
+    setError("");
     try {
-      const name = `${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
-      const { error } = await sb.storage.from("product-images").upload(name, file, { upsert: true });
-      if (error) throw error;
-      const { data } = sb.storage.from("product-images").getPublicUrl(name);
-      return data.publicUrl;
-    } catch {
-      setError("No se pudo subir la foto. Intenta de nuevo.");
-      return form.main_image;
+      const dataUrl = await fileToDataUrl(file);
+      const r = await fetch("/api/admin/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dataUrl }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error ?? "No se pudo subir");
+      setForm((f) => ({ ...f, main_image: d.path }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo subir la foto");
     } finally {
       setUploading(false);
     }
   }
 
+  function buildProducts(): Product[] {
+    const prev = editingId ? products.find((p) => p.id === editingId) : undefined;
+    const base: Product = prev ?? {
+      id: `p${Date.now()}`,
+      slug: "",
+      name: "",
+      subtitle: "Cutis Radiante 7D 💗",
+      description: "",
+      price: null,
+      main_image: "",
+      gallery: [],
+      ingredients: [],
+      details: [],
+      includes: [],
+      cta_label: "Mándame mensaje",
+      wa_message: "",
+      visible: true,
+      sort_order: products.length,
+    };
+    const updated: Product = {
+      ...base,
+      name: form.name.trim(),
+      description: form.description.trim(),
+      price: form.price === "" ? null : Number(form.price),
+      main_image: form.main_image.trim(),
+      details: form.contenido.trim()
+        ? [{ label: base.details[0]?.label || "Contenido", value: form.contenido.trim() }]
+        : base.details,
+      includes: linesToList(form.includes),
+      cta_label: form.cta_label.trim() || "Mándame mensaje",
+    };
+    if (editingId) return products.map((p) => (p.id === editingId ? updated : p));
+    return [...products, updated];
+  }
+
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    if (!sb) return;
     if (!form.name.trim()) {
       setError("Escribe el nombre del producto 💗");
       return;
     }
     setSaving(true);
     setError("");
-
-    const prevDetails = ((editing?.details as { label: string; value: string }[]) ?? []);
-    const details =
-      form.contenido.trim()
-        ? [{ label: prevDetails[0]?.label || "Contenido", value: form.contenido.trim() }]
-        : prevDetails;
-
-    const payload = {
-      slug: editing ? String(editing.slug) : slugify(form.name),
-      name: form.name.trim(),
-      subtitle: String(editing?.subtitle ?? "Cutis Radiante 7D 💗"),
-      description: form.description.trim(),
-      price: form.price === "" ? null : Number(form.price),
-      compare_price: (editing?.compare_price as number | null) ?? null,
-      main_image: form.main_image.trim(),
-      gallery: ((editing?.gallery as string[]) ?? []) as string[],
-      benefits: ((editing?.benefits as string[]) ?? []) as string[],
-      ingredients: ((editing?.ingredients as string[]) ?? []) as string[],
-      how_to_use: ((editing?.how_to_use as string[]) ?? []) as string[],
-      details,
-      includes: linesToList(form.includes),
-      cta_label: form.cta_label.trim() || "Mándame mensaje",
-      wa_message: form.wa_message.trim(),
-      faqs: ((editing?.faqs as { q: string; a: string }[]) ?? []) as { q: string; a: string }[],
-      visible: form.visible,
-      sort_order: Number(form.sort_order) || 0,
-    };
-
-    const { error } = editing
-      ? await sb.from("products").update(payload).eq("id", editing.id as string)
-      : await sb.from("products").insert(payload);
+    setOk("");
+    const r = await fetch("/api/admin/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products: buildProducts(), settings }),
+    });
+    const d = await r.json().catch(() => ({}));
     setSaving(false);
-    if (error) {
-      setError("No se pudo guardar: " + error.message);
+    if (!r.ok) {
+      setError(d.error ?? "No se pudo guardar");
       return;
     }
-    setEditing(null);
-    setForm(EMPTY);
     setShowForm(false);
+    setEditingId(null);
+    setForm(EMPTY);
+    setOk("Guardado 💗 La página se actualiza sola en 1-2 minutos.");
     loadAll();
   }
 
   async function remove(id: string, name: string) {
-    if (!sb || !confirm(`¿Eliminar "${name}" de la página?`)) return;
-    await sb.from("products").delete().eq("id", id);
+    if (!confirm(`¿Quitar "${name}" de la página?`)) return;
+    setSaving(true);
+    const r = await fetch("/api/admin/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products: products.filter((p) => p.id !== id), settings }),
+    });
+    setSaving(false);
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      setError(d.error ?? "No se pudo eliminar");
+      return;
+    }
+    setOk("Eliminado 💗 La página se actualiza sola en 1-2 minutos.");
     loadAll();
   }
 
   async function saveSettings(e: React.FormEvent) {
     e.preventDefault();
-    if (!sb || !settings) return;
+    if (!settings) return;
     setSaving(true);
-    const { error } = await sb.from("site_settings").update(settings).eq("id", 1);
+    setError("");
+    setOk("");
+    const r = await fetch("/api/admin/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products, settings }),
+    });
+    const d = await r.json().catch(() => ({}));
     setSaving(false);
-    if (error) setError(error.message);
-    else alert("Guardado ✓ Ya se ve en la página 💗");
+    if (!r.ok) {
+      setError(d.error ?? "No se pudo guardar");
+      return;
+    }
+    setOk("Guardado 💗 La página se actualiza sola en 1-2 minutos.");
   }
 
-  if (loading) return <Shell><p className="p-10 text-center">Cargando… 💗</p></Shell>;
+  if (checking) return <Shell><p className="p-10 text-center">Cargando… 💗</p></Shell>;
 
-  if (!envOk) {
-    return (
-      <Shell>
-        <div className="mx-auto max-w-lg p-8 text-center">
-          <h1 className="font-serif text-2xl font-bold">Falta conectar la tienda</h1>
-          <p className="mt-3 text-sm leading-relaxed opacity-70">
-            Pide al administrador que configure Supabase en Vercel.
-          </p>
-        </div>
-      </Shell>
-    );
-  }
-
-  if (!session) {
+  if (!logged) {
     return (
       <Shell>
         <form onSubmit={login} className="mx-auto mt-14 max-w-sm rounded-4xl border border-blush-200 bg-white p-8 shadow-card">
@@ -249,11 +303,11 @@ export default function AdminPage() {
         <div className="flex items-center justify-between gap-3">
           <div>
             <h1 className="font-serif text-[26px] font-bold text-cocoa-900">Mis productos 💗</h1>
-            <p className="text-sm text-cocoa-800/60">Lo que cambies aquí se ve en la página.</p>
+            <p className="text-sm text-cocoa-800/60">Lo que guardes se publica solo en 1-2 min.</p>
           </div>
           <button
             className="rounded-full border border-blush-200 bg-white px-4 py-2 text-sm font-semibold"
-            onClick={() => sb?.auth.signOut().then(() => setSession(null))}
+            onClick={logout}
           >
             Salir
           </button>
@@ -263,7 +317,7 @@ export default function AdminPage() {
           {(["products", "settings"] as const).map((t) => (
             <button
               key={t}
-              onClick={() => { setTab(t); setShowForm(false); }}
+              onClick={() => { setTab(t); setShowForm(false); setOk(""); setError(""); }}
               className={`rounded-full px-5 py-2.5 text-sm font-semibold ${tab === t ? "bg-cocoa-900 text-white" : "border border-blush-200 bg-white"}`}
             >
               {t === "products" ? "💄 Productos" : "⚙️ Datos"}
@@ -272,27 +326,28 @@ export default function AdminPage() {
         </div>
 
         {error && <p className="mt-4 rounded-2xl bg-red-50 p-4 text-sm font-medium text-red-700">{error}</p>}
+        {ok && <p className="mt-4 rounded-2xl bg-green-50 p-4 text-sm font-medium text-green-700">{ok}</p>}
 
         {tab === "products" && !showForm && (
           <div className="mt-5 space-y-3">
             {products.map((p) => (
-              <div key={String(p.id)} className="flex items-center gap-3 rounded-3xl border border-blush-200 bg-white p-4 shadow-sm">
+              <div key={p.id} className="flex items-center gap-3 rounded-3xl border border-blush-200 bg-white p-4 shadow-sm">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 {p.main_image ? (
-                  <img src={String(p.main_image)} alt="" className="h-14 w-14 rounded-2xl object-cover" />
+                  <img src={p.main_image} alt="" className="h-14 w-14 rounded-2xl object-cover" />
                 ) : (
-                  <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-50 font-serif text-brand-500">CR</span>
+                  <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-brand-500 font-serif text-sm font-bold text-white">KIT</span>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-semibold text-cocoa-900">{String(p.name)}</p>
+                  <p className="truncate font-semibold text-cocoa-900">{p.name}</p>
                   <p className="text-xs text-cocoa-800/55">
-                    {(p.price as number | null) != null ? `$${p.price} pesos` : "Sin precio"} · {(p.visible as boolean) ? "Se ve 👀" : "Oculto 🙈"}
+                    {p.price != null ? `$${p.price} pesos` : "Sin precio"} · {p.visible ? "Se ve 👀" : "Oculto 🙈"}
                   </p>
                 </div>
                 <button onClick={() => startEdit(p)} className="shrink-0 rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-white">
                   Editar
                 </button>
-                <button onClick={() => remove(String(p.id), String(p.name))} className="shrink-0 px-2 py-2 text-sm text-red-400" aria-label="Eliminar">
+                <button onClick={() => remove(p.id, p.name)} className="shrink-0 px-2 py-2 text-sm" aria-label="Eliminar">
                   🗑️
                 </button>
               </div>
@@ -305,7 +360,7 @@ export default function AdminPage() {
 
         {tab === "products" && showForm && (
           <form onSubmit={save} className="mt-5 rounded-4xl border border-blush-200 bg-white p-6 shadow-card">
-            <h2 className="font-serif text-xl font-bold">{editing ? "Editar producto" : "Nuevo producto"}</h2>
+            <h2 className="font-serif text-xl font-bold">{editingId ? "Editar producto" : "Nuevo producto"}</h2>
 
             <label className="label mt-4">Nombre</label>
             <input className="field" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ej: Crema Reparadora" />
@@ -332,9 +387,9 @@ export default function AdminPage() {
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={async (e) => {
+                onChange={(e) => {
                   const f = e.target.files?.[0];
-                  if (f) setForm({ ...form, main_image: await uploadImage(f) });
+                  if (f) uploadImage(f);
                 }}
               />
             </label>
@@ -348,16 +403,11 @@ export default function AdminPage() {
             <label className="label mt-4">Texto del botón</label>
             <input className="field" value={form.cta_label} onChange={(e) => setForm({ ...form, cta_label: e.target.value })} placeholder="Mándame mensaje" />
 
-            <label className="mt-4 flex items-center gap-3 rounded-2xl bg-brand-50/60 p-4 text-sm font-semibold">
-              <input type="checkbox" checked={form.visible} onChange={(e) => setForm({ ...form, visible: e.target.checked })} className="h-5 w-5 accent-pink-600" />
-              Se ve en la página 👀
-            </label>
-
             <div className="mt-5 flex gap-3">
               <button disabled={saving} className="btn-primary flex-1 !py-3.5">
                 {saving ? "Guardando…" : "Guardar 💗"}
               </button>
-              <button type="button" onClick={() => { setShowForm(false); setEditing(null); setForm(EMPTY); }} className="btn-ghost">
+              <button type="button" onClick={() => { setShowForm(false); setEditingId(null); setForm(EMPTY); }} className="btn-ghost">
                 Atrás
               </button>
             </div>
@@ -368,13 +418,13 @@ export default function AdminPage() {
           <form onSubmit={saveSettings} className="mt-5 rounded-4xl border border-blush-200 bg-white p-6 shadow-card">
             <h2 className="font-serif text-xl font-bold">Datos de la tienda</h2>
             <label className="label mt-4">Número de WhatsApp</label>
-            <input className="field" value={String(settings.whatsapp_number ?? "")} onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value.replace(/\D/g, "") })} />
+            <input className="field" value={settings.whatsapp_number} onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value.replace(/\D/g, "") })} />
             <p className="hint">Con código de país, sin + ni espacios. Ej: 523132151401</p>
             <label className="label mt-4">Mensaje automático</label>
-            <input className="field" value={String(settings.whatsapp_message ?? "")} onChange={(e) => setSettings({ ...settings, whatsapp_message: e.target.value })} />
+            <input className="field" value={settings.whatsapp_message} onChange={(e) => setSettings({ ...settings, whatsapp_message: e.target.value })} />
             <p className="hint">{"{producto}"} se cambia solo por el nombre del producto.</p>
             <label className="label mt-4">Instagram (si tienes, si no déjalo vacío)</label>
-            <input className="field" value={String(settings.instagram ?? "")} onChange={(e) => setSettings({ ...settings, instagram: e.target.value })} />
+            <input className="field" value={settings.instagram} onChange={(e) => setSettings({ ...settings, instagram: e.target.value })} />
             <button disabled={saving} className="btn-primary mt-5 w-full !py-3.5">
               {saving ? "Guardando…" : "Guardar 💗"}
             </button>
