@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { NAV_LINKS } from "@/lib/site";
+import Image from "next/image";
+import { NAV_LINKS, LOGO_IMAGE } from "@/lib/site";
 import { buildWaLink } from "@/lib/whatsapp";
 
 type Props = { brand: string; waNumber: string; waMessage: string };
@@ -28,14 +29,14 @@ export default function Navbar({ brand, waNumber, waMessage }: Props) {
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "border-b border-blush-200/70 bg-cream/90 shadow-card backdrop-blur-xl"
-          : "bg-gradient-to-b from-cream/95 to-cream/40 backdrop-blur-sm"
+          ? "border-b border-white/40 bg-white/70 shadow-card backdrop-blur-xl"
+          : "border-b border-transparent bg-white/40 backdrop-blur-lg"
       }`}
     >
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 md:h-[72px] lg:px-8">
         <a href="#inicio" className="flex items-center gap-2.5" aria-label={brand}>
-          <span className="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 font-serif text-lg text-white shadow-card">
-            C
+          <span className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full shadow-card ring-2 ring-white">
+            <Image src={LOGO_IMAGE} alt="Cutis Radiante 7D" fill sizes="40px" className="object-cover" />
           </span>
           <span className="leading-tight">
             <span className="block font-serif text-[17px] font-bold text-cocoa-900">{brand}</span>
@@ -56,6 +57,12 @@ export default function Navbar({ brand, waNumber, waMessage }: Props) {
             </a>
           ))}
           <a
+            href="/admin"
+            className="text-[14.5px] font-medium text-cocoa-800/50 transition hover:text-brand-600"
+          >
+            🔒 Admin
+          </a>
+          <a
             href={buildWaLink(waNumber, waMessage)}
             target="_blank"
             rel="noopener"
@@ -66,7 +73,7 @@ export default function Navbar({ brand, waNumber, waMessage }: Props) {
         </div>
 
         <button
-          className="grid h-11 w-11 place-items-center rounded-full border border-blush-200 bg-white/80 lg:hidden"
+          className="grid h-11 w-11 place-items-center rounded-full border border-white/50 bg-white/70 backdrop-blur-xl lg:hidden"
           onClick={() => setOpen(!open)}
           aria-label={open ? "Cerrar menú" : "Abrir menú"}
           aria-expanded={open}
@@ -85,21 +92,26 @@ export default function Navbar({ brand, waNumber, waMessage }: Props) {
         </button>
       </nav>
 
-      {/* Menú móvil: panel amplio, legible, fácil de tocar */}
       {open && (
-        <div className="border-t border-blush-200/70 bg-cream/98 px-5 pb-8 pt-3 backdrop-blur-xl lg:hidden">
+        <div className="border-t border-white/40 bg-white/85 px-5 pb-8 pt-3 backdrop-blur-2xl lg:hidden">
           <div className="flex flex-col gap-1">
-            {NAV_LINKS.map((l, i) => (
+            {NAV_LINKS.map((l) => (
               <a
                 key={l.href}
                 href={l.href}
                 onClick={() => setOpen(false)}
                 className="rounded-2xl px-4 py-3.5 font-serif text-xl text-cocoa-900 transition hover:bg-brand-50"
-                style={{ animationDelay: `${i * 40}ms` }}
               >
                 {l.label}
               </a>
             ))}
+            <a
+              href="/admin"
+              onClick={() => setOpen(false)}
+              className="rounded-2xl px-4 py-3 text-[15px] font-medium text-cocoa-800/50"
+            >
+              🔒 Admin
+            </a>
             <a
               href={buildWaLink(waNumber, waMessage)}
               target="_blank"

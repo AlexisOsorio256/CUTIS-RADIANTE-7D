@@ -3,7 +3,8 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
-import { Catalogo, Mayoreo, Ritual, Faq, Contacto } from "@/components/HomeSections";
+import StickyBuyBar from "@/components/StickyBuyBar";
+import { Catalogo, Mayoreo, Ritual, Faq, Contacto, Marquee } from "@/components/HomeSections";
 
 export const revalidate = 60;
 
@@ -18,6 +19,9 @@ export default async function Home() {
     );
   }
 
+  const prices = products.map((p) => p.price).filter((v): v is number => v != null);
+  const fromPrice = prices.length > 0 ? Math.min(...prices) : null;
+
   return (
     <main>
       <Navbar
@@ -30,6 +34,7 @@ export default async function Home() {
         waNumber={settings.whatsapp_number}
         waMessage={settings.whatsapp_message}
       />
+      <Marquee />
       <Catalogo
         products={products}
         waNumber={settings.whatsapp_number}
@@ -50,6 +55,13 @@ export default async function Home() {
         waMessage={settings.whatsapp_message}
         instagram={settings.instagram}
         footerText={settings.footer_text}
+      />
+      {/* espacio para que la barra fija móvil no tape el final */}
+      <div aria-hidden className="h-[76px] bg-white/60 md:hidden" />
+      <StickyBuyBar
+        waNumber={settings.whatsapp_number}
+        waMessage={settings.whatsapp_message}
+        fromPrice={fromPrice}
       />
       <WhatsAppFloat waNumber={settings.whatsapp_number} waMessage={settings.whatsapp_message} />
     </main>

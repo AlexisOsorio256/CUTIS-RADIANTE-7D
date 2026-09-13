@@ -112,15 +112,33 @@ body {
 
 /* ---- botones ---- */
 .btn-primary {
-  @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand-500 px-7 py-4 text-base font-semibold text-white shadow-float transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-soft focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 active:translate-y-0;
+  position: relative;
+  overflow: hidden;
+  @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand-500 px-7 py-4 text-base font-semibold text-white shadow-float transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-soft focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 active:translate-y-0 active:scale-[0.98];
+}
+/* brillo que cruza el botón */
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.45) 50%, transparent 60%);
+  transform: translateX(-120%);
+  transition: transform 0.9s ease;
+  pointer-events: none;
+}
+.btn-primary:hover::after {
+  transform: translateX(120%);
 }
 .btn-ghost {
   @apply inline-flex items-center justify-center gap-2 rounded-full border border-brand-200 bg-white/70 px-6 py-3.5 text-base font-semibold text-cocoa-800 backdrop-blur transition-all duration-300 hover:border-brand-300 hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100;
 }
 
-/* ---- tarjetas ---- */
+/* ---- tarjetas (glass) ---- */
 .card {
-  @apply rounded-4xl border border-blush-200/70 bg-white shadow-card;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  @apply rounded-4xl border border-white/60 shadow-card;
 }
 .eyebrow {
   @apply inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-brand-600;
@@ -139,6 +157,59 @@ body {
 }
 .photo-frame:hover img {
   transform: scale(1.03);
+}
+
+/* ---- glass estilo iOS ---- */
+.glass {
+  background: rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+}
+.glass-rose {
+  background: rgba(251, 228, 235, 0.55);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+/* ---- marquesina ---- */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 26s linear infinite;
+}
+
+/* ---- flotación suave ya definida arriba; latido para CTA ---- */
+@keyframes heartbeat {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  12% {
+    transform: scale(1.06);
+  }
+  24% {
+    transform: scale(1);
+  }
+}
+.beat {
+  animation: heartbeat 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track,
+  .beat {
+    animation: none;
+  }
 }
 
 /* ---- acordeón FAQ ---- */

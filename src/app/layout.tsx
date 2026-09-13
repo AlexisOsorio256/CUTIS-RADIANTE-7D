@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "es_CO",
   },
-  icons: { icon: "/favicon.svg" },
+  icons: { icon: "/images/crema-reparadora-etiqueta.jpg" },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
