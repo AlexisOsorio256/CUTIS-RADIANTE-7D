@@ -201,27 +201,9 @@ body {
     transform: scale(1);
   }
 }
-/* ---- insinuación de deslizamiento ---- */
-@keyframes nudgeX {
-  0%,
-  100% {
-    transform: translateX(0);
-    opacity: 0.9;
-  }
-  50% {
-    transform: translateX(7px);
-    opacity: 1;
-  }
-}
-.nudge {
-  display: inline-block;
-  animation: nudgeX 1.8s ease-in-out infinite;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .marquee-track,
-  .beat,
-  .nudge {
+  .beat {
     animation: none;
   }
 }

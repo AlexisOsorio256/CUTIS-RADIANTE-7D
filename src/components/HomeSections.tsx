@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import type { Product } from "@/lib/types";
 import { productLink } from "@/lib/whatsapp";
@@ -44,6 +45,53 @@ export function Catalogo({
   waMessage: string;
   likes: Record<string, number>;
 }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const touched = useRef(false);
+  const [index, setIndex] = useState(0);
+  const total = products.length;
+
+  function cardStep(): number {
+    const track = trackRef.current;
+    const first = track?.children[0] as HTMLElement | undefined;
+    return (first?.offsetWidth ?? 340) + 20;
+  }
+
+  function updateIndex() {
+    const track = trackRef.current;
+    if (!track) return;
+    setIndex(Math.min(total - 1, Math.max(0, Math.round(track.scrollLeft / cardStep()))));
+  }
+
+  function go(dir: 1 | -1) {
+    touched.current = true;
+    trackRef.current?.scrollBy({ left: dir * cardStep(), behavior: "smooth" });
+  }
+
+  // Avance automático hasta que la persona toca el carrusel.
+  // Así se descubre que hay más productos sin adivinar el gesto.
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const stop = () => {
+      touched.current = true;
+    };
+    const track = trackRef.current;
+    track?.addEventListener("pointerdown", stop, { passive: true });
+    track?.addEventListener("wheel", stop, { passive: true });
+    const id = window.setInterval(() => {
+      if (touched.current || document.hidden) return;
+      const t = trackRef.current;
+      if (!t) return;
+      const step = cardStep();
+      const last = Math.round(t.scrollLeft / step) >= total - 1;
+      t.scrollTo({ left: last ? 0 : t.scrollLeft + step, behavior: "smooth" });
+    }, 3800);
+    return () => {
+      window.clearInterval(id);
+      track?.removeEventListener("pointerdown", stop);
+      track?.removeEventListener("wheel", stop);
+    };
+  }, [total]);
+
   return (
     <section id="productos" className="mx-auto max-w-6xl px-5 py-12 md:py-16 lg:px-8">
       <Reveal className="mx-auto max-w-2xl text-center">
@@ -56,7 +104,9 @@ export function Catalogo({
       <div className="relative">
         <div
           id="pista-productos"
-          className="no-scrollbar -mx-5 mt-9 flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 pb-4 lg:mx-0 lg:px-1"
+          ref={trackRef}
+          onScroll={updateIndex}
+          className="no-scrollbar -mx-5 mt-9 flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 pb-4 [mask-image:linear-gradient(to_right,#000_88%,transparent_100%)] lg:mx-0 lg:px-1"
         >
           {products.map((p, i) => {
             const grams = p.details.find(
@@ -144,19 +194,31 @@ export function Catalogo({
         </div>
 
         <div className="mt-3 flex items-center justify-between gap-3">
-          <p className="glass inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12.5px] font-bold text-brand-600">
-            Desliza <span className="nudge">→</span>
-          </p>
+          <div className="glass flex items-center gap-2.5 rounded-full px-4 py-2.5">
+            <div className="flex items-center gap-1.5" aria-hidden>
+              {products.map((p, d) => (
+                <span
+                  key={p.slug}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${
+                    d === index ? "w-5 bg-brand-500" : "w-1.5 bg-brand-200"
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="text-xs font-bold tabular-nums text-cocoa-900" aria-live="polite">
+              {index + 1} de {total}
+            </span>
+          </div>
           <div className="flex gap-2">
             <button
-              onClick={() => document.getElementById("pista-productos")?.scrollBy({ left: -340, behavior: "smooth" })}
+              onClick={() => go(-1)}
               aria-label="Productos anteriores"
               className="glass grid h-10 w-10 place-items-center rounded-full text-lg text-cocoa-900 shadow-card transition hover:text-brand-600 active:scale-90"
             >
               ←
             </button>
             <button
-              onClick={() => document.getElementById("pista-productos")?.scrollBy({ left: 340, behavior: "smooth" })}
+              onClick={() => go(1)}
               aria-label="Más productos"
               className="glass grid h-10 w-10 place-items-center rounded-full text-lg text-cocoa-900 shadow-card transition hover:text-brand-600 active:scale-90"
             >
