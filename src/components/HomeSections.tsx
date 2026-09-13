@@ -70,14 +70,15 @@ export function Catalogo({
               >
                 <article data-buy={p.slug} className="card flex h-full flex-col overflow-hidden">
                   {p.main_image && (
-                    <div className="photo-frame m-3 mb-0 aspect-square !rounded-3xl bg-blush-50">
+                    <div className="photo-frame m-3 mb-0 aspect-square select-none !rounded-3xl bg-blush-50 ring-1 ring-white/70">
                       <Image
                         src={p.main_image}
                         alt={p.name}
                         fill
                         sizes="340px"
-                        className="object-contain"
+                        className="pointer-events-none object-contain"
                         loading="lazy"
+                        draggable={false}
                       />
                       {grams && (
                         <span className="glass absolute bottom-3 left-3 rounded-full px-3 py-1 text-xs font-bold text-cocoa-900">
@@ -90,7 +91,7 @@ export function Catalogo({
                     </div>
                   )}
 
-                  <div className="flex flex-1 flex-col p-6">
+                  <div className="flex flex-1 flex-col p-5">
                     <p className="text-[11.5px] font-bold uppercase tracking-[0.2em] text-brand-500">
                       {p.subtitle}
                     </p>
@@ -142,20 +143,22 @@ export function Catalogo({
           })}
         </div>
 
-        <div className="mt-1 hidden items-center justify-between md:flex">
-          <p className="text-sm text-cocoa-800/55">Desliza para ver todos 💗</p>
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <p className="glass inline-flex items-center gap-2 rounded-full px-4 py-2 text-[12.5px] font-bold text-brand-600">
+            Desliza <span className="nudge">→</span>
+          </p>
           <div className="flex gap-2">
             <button
-              onClick={() => document.getElementById("pista-productos")?.scrollBy({ left: -360, behavior: "smooth" })}
+              onClick={() => document.getElementById("pista-productos")?.scrollBy({ left: -340, behavior: "smooth" })}
               aria-label="Productos anteriores"
-              className="glass grid h-11 w-11 place-items-center rounded-full text-xl text-cocoa-900 shadow-card transition hover:text-brand-600 active:scale-90"
+              className="glass grid h-10 w-10 place-items-center rounded-full text-lg text-cocoa-900 shadow-card transition hover:text-brand-600 active:scale-90"
             >
               ←
             </button>
             <button
-              onClick={() => document.getElementById("pista-productos")?.scrollBy({ left: 360, behavior: "smooth" })}
+              onClick={() => document.getElementById("pista-productos")?.scrollBy({ left: 340, behavior: "smooth" })}
               aria-label="Más productos"
-              className="glass grid h-11 w-11 place-items-center rounded-full text-xl text-cocoa-900 shadow-card transition hover:text-brand-600 active:scale-90"
+              className="glass grid h-10 w-10 place-items-center rounded-full text-lg text-cocoa-900 shadow-card transition hover:text-brand-600 active:scale-90"
             >
               →
             </button>
@@ -194,42 +197,45 @@ export function Mayoreo({ waNumber }: { waNumber: string; waMessage: string }) {
   );
 }
 
-/* ---------- Cómo usar (compacto) ---------- */
+/* ---------- Cómo usar (cinta compacta) ---------- */
 export function Ritual() {
   const steps = [
-    { n: "1", title: "Limpia", desc: "Jabón de día y de noche." },
-    { n: "2", title: "Exfolia", desc: "Arroz solo 2 veces por semana." },
-    { n: "3", title: "Trata", desc: "Ultra Master solo por las noches." },
-    { n: "4", title: "Nutre", desc: "Crema reparadora día y noche." },
-    { n: "5", title: "Protege", desc: "Bloqueador FPS 75 cada mañana." },
+    { n: "1", title: "Limpia", desc: "Jabón día y noche" },
+    { n: "2", title: "Exfolia", desc: "Arroz 2 veces por semana" },
+    { n: "3", title: "Trata", desc: "Ultra Master de noche" },
+    { n: "4", title: "Nutre", desc: "Reparadora día y noche" },
+    { n: "5", title: "Protege", desc: "Bloqueador cada mañana" },
   ];
   return (
-    <section id="ritual" className="bg-gradient-to-b from-blush-50/60 to-white py-12 md:py-16">
+    <section id="ritual" className="bg-gradient-to-b from-blush-50/60 to-white py-10 md:py-14">
       <div className="mx-auto max-w-6xl px-5 lg:px-8">
         <Reveal className="mx-auto max-w-2xl text-center">
           <p className="eyebrow">Cómo usar</p>
-          <h2 className="mt-4 font-serif text-3xl font-bold text-cocoa-900 md:text-[36px]">
+          <h2 className="mt-3 font-serif text-[26px] font-bold text-cocoa-900 md:text-[32px]">
             Tu rutina en 5 pasos
           </h2>
         </Reveal>
-        <ol className="mx-auto mt-8 grid max-w-4xl gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          {steps.map((s, i) => (
-            <Reveal key={s.n} delay={i * 70}>
-              <li className="card h-full p-5 text-center transition-transform duration-300 hover:-translate-y-1">
-                <span className="mx-auto grid h-10 w-10 place-items-center rounded-full bg-brand-500 font-serif text-lg font-bold text-white shadow-card">
+        <Reveal delay={100}>
+          <div className="no-scrollbar -mx-5 mt-6 flex snap-x gap-3 overflow-x-auto px-5 pb-2 lg:mx-0 lg:grid lg:grid-cols-5 lg:overflow-visible lg:px-0">
+            {steps.map((s) => (
+              <div
+                key={s.n}
+                className="card flex w-[172px] shrink-0 snap-center items-center gap-3 p-4 text-left lg:w-auto"
+              >
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-500 font-serif text-base font-bold text-white shadow-card">
                   {s.n}
                 </span>
-                <p className="mt-2.5 font-serif text-[17px] font-bold text-cocoa-900">{s.title}</p>
-                <p className="mt-1 text-[13.5px] leading-relaxed text-cocoa-800/70">{s.desc}</p>
-              </li>
-            </Reveal>
-          ))}
-        </ol>
-        <Reveal>
-          <p className="mx-auto mt-5 max-w-2xl text-center text-[13px] leading-relaxed text-cocoa-800/60">
-            ⚠️ Evita el contacto con los ojos. Si hay irritación, suspende el uso.
-          </p>
+                <div className="min-w-0">
+                  <p className="font-serif text-[15px] font-bold leading-tight text-cocoa-900">{s.title}</p>
+                  <p className="mt-0.5 text-xs leading-snug text-cocoa-800/70">{s.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
         </Reveal>
+        <p className="mx-auto mt-4 max-w-2xl text-center text-xs leading-relaxed text-cocoa-800/55">
+          ⚠️ Evita el contacto con los ojos. Si hay irritación, suspende el uso.
+        </p>
       </div>
     </section>
   );
