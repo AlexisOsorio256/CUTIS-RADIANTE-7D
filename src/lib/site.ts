@@ -7,7 +7,7 @@ import type { SiteSettings } from "./types";
  */
 export const SITE_DEFAULTS: SiteSettings = {
   brand_name: "Cutis Radiante 7D",
-  whatsapp_number: "573132151401", // 313 215 1401 (visto en etiquetas del producto)
+  whatsapp_number: "523132151401", // 313 215 1401 · México (+52)
   whatsapp_message: "Hola, me interesa {producto} 💗 ¿Me das más información?",
   instagram: "",
   footer_text: "Cosmética artesanal · Ingredientes naturales",

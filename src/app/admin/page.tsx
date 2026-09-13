@@ -369,7 +369,7 @@ export default function AdminPage() {
             <h2 className="font-serif text-xl font-bold">Datos de la tienda</h2>
             <label className="label mt-4">Número de WhatsApp</label>
             <input className="field" value={String(settings.whatsapp_number ?? "")} onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value.replace(/\D/g, "") })} />
-            <p className="hint">Con código de país, sin + ni espacios. Ej: 573132151401</p>
+            <p className="hint">Con código de país, sin + ni espacios. Ej: 523132151401</p>
             <label className="label mt-4">Mensaje automático</label>
             <input className="field" value={String(settings.whatsapp_message ?? "")} onChange={(e) => setSettings({ ...settings, whatsapp_message: e.target.value })} />
             <p className="hint">{"{producto}"} se cambia solo por el nombre del producto.</p>

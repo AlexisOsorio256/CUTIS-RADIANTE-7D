@@ -37,7 +37,7 @@ alter table public.products add column if not exists wa_message text default '';
 create table if not exists public.site_settings (
   id int primary key,
   brand_name text default 'Cutis Radiante 7D',
-  whatsapp_number text default '573132151401',
+  whatsapp_number text default '523132151401',
   whatsapp_message text default 'Hola, me interesa {producto} 💗 ¿Me das más información?',
   instagram text default '',
   footer_text text default 'Cosmética artesanal · Ingredientes naturales'
