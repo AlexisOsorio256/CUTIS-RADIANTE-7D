@@ -34,6 +34,9 @@ function normalizeProduct(row: Record<string, unknown>): Product {
       ? (row.how_to_use as string[])
       : [],
     details,
+    includes: Array.isArray(row.includes) ? (row.includes as string[]) : [],
+    cta_label: String(row.cta_label ?? row.ctaLabel ?? "") || "Mándame mensaje",
+    wa_message: String(row.wa_message ?? row.waMessage ?? ""),
     faqs: Array.isArray(row.faqs)
       ? (row.faqs as { q: string; a: string }[])
       : [],

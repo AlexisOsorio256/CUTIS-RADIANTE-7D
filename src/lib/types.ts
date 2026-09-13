@@ -14,6 +14,12 @@ export type Product = {
   ingredients: string[];
   how_to_use: string[];
   details: { label: string; value: string }[];
+  /** Para el kit: lista de lo que incluye */
+  includes: string[];
+  /** Texto del botón. Si está vacío se usa "Mándame mensaje" */
+  cta_label: string;
+  /** Mensaje propio de WhatsApp. Si está vacío se usa el general */
+  wa_message: string;
   faqs: Faq[];
   visible: boolean;
   sort_order: number;

@@ -2,47 +2,24 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabaseBrowser, hasSupabaseEnv } from "@/lib/supabaseClient";
+import { loginToEmail } from "@/lib/site";
 
-/* ---------- helpers texto <-> lista (para no obligar a editar JSON) ---------- */
 const linesToList = (t: string) => t.split("\n").map((s) => s.trim()).filter(Boolean);
 const listToLines = (a: string[] = []) => a.join("\n");
-const detailsToLines = (d: { label: string; value: string }[] = []) =>
-  d.map((x) => `${x.label}: ${x.value}`).join("\n");
-const linesToDetails = (t: string) =>
-  linesToList(t)
-    .map((line) => {
-      const i = line.indexOf(":");
-      if (i < 0) return null;
-      return { label: line.slice(0, i).trim(), value: line.slice(i + 1).trim() };
-    })
-    .filter(Boolean) as { label: string; value: string }[];
-const faqsToLines = (f: { q: string; a: string }[] = []) =>
-  f.map((x) => `${x.q} | ${x.a}`).join("\n");
-const linesToFaqs = (t: string) =>
-  linesToList(t)
-    .map((line) => {
-      const i = line.indexOf("|");
-      if (i < 0) return null;
-      return { q: line.slice(0, i).trim(), a: line.slice(i + 1).trim() };
-    })
-    .filter(Boolean) as { q: string; a: string }[];
+const slugify = (s: string) =>
+  s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
 type Row = Record<string, unknown>;
 
 const EMPTY = {
-  slug: "",
   name: "",
-  subtitle: "",
-  description: "",
   price: "",
-  compare_price: "",
   main_image: "",
-  gallery: "",
-  benefits: "",
-  ingredients: "",
-  how_to_use: "",
-  details: "",
-  faqs: "",
+  description: "",
+  contenido: "",
+  includes: "",
+  cta_label: "",
+  wa_message: "",
   visible: true,
   sort_order: 0,
 };
@@ -52,16 +29,17 @@ export default function AdminPage() {
   const [sb] = useState(() => (envOk ? supabaseBrowser() : null));
   const [session, setSession] = useState<unknown>(null);
   const [loading, setLoading] = useState(true);
-  const [email, setEmail] = useState("");
+  const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [products, setProducts] = useState<Row[]>([]);
   const [settings, setSettings] = useState<Row | null>(null);
   const [editing, setEditing] = useState<Row | null>(null);
+  const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
-  const [tab, setTab] = useState<"products" | "settings">("products");
   const [uploading, setUploading] = useState(false);
+  const [tab, setTab] = useState<"products" | "settings">("products");
 
   useEffect(() => {
     if (!sb) {
@@ -95,34 +73,40 @@ export default function AdminPage() {
     e.preventDefault();
     if (!sb) return;
     setError("");
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) setError("No pudimos entrar. Revisa correo y contraseña.");
+    const { error } = await sb.auth.signInWithPassword({
+      email: loginToEmail(user),
+      password,
+    });
+    if (error) setError("Usuario o contraseña incorrectos. Intenta de nuevo 💗");
+  }
+
+  function firstDetail(p: Row): string {
+    const d = p.details as { label: string; value: string }[] | undefined;
+    return d && d.length > 0 ? d[0].value : "";
   }
 
   function startNew() {
     setEditing(null);
-    setForm({ ...EMPTY, sort_order: products.length + 1 });
+    setForm({ ...EMPTY, sort_order: products.length + 1, cta_label: "Mándame mensaje" });
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function startEdit(p: Row) {
     setEditing(p);
     setForm({
-      slug: String(p.slug ?? ""),
       name: String(p.name ?? ""),
-      subtitle: String(p.subtitle ?? ""),
-      description: String(p.description ?? ""),
       price: p.price == null ? "" : String(p.price),
-      compare_price: p.compare_price == null ? "" : String(p.compare_price),
       main_image: String(p.main_image ?? ""),
-      gallery: listToLines((p.gallery as string[]) ?? []),
-      benefits: listToLines((p.benefits as string[]) ?? []),
-      ingredients: listToLines((p.ingredients as string[]) ?? []),
-      how_to_use: listToLines((p.how_to_use as string[]) ?? []),
-      details: detailsToLines((p.details as { label: string; value: string }[]) ?? []),
-      faqs: faqsToLines((p.faqs as { q: string; a: string }[]) ?? []),
+      description: String(p.description ?? ""),
+      contenido: firstDetail(p),
+      includes: listToLines((p.includes as string[]) ?? []),
+      cta_label: String((p.cta_label as string) ?? "") || "Mándame mensaje",
+      wa_message: String((p.wa_message as string) ?? ""),
       visible: (p.visible as boolean) !== false,
       sort_order: Number(p.sort_order ?? 0),
     });
+    setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -135,6 +119,9 @@ export default function AdminPage() {
       if (error) throw error;
       const { data } = sb.storage.from("product-images").getPublicUrl(name);
       return data.publicUrl;
+    } catch {
+      setError("No se pudo subir la foto. Intenta de nuevo.");
+      return form.main_image;
     } finally {
       setUploading(false);
     }
@@ -143,31 +130,42 @@ export default function AdminPage() {
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!sb) return;
-    if (!form.name.trim() || !form.slug.trim()) {
-      setError("El nombre y el identificador (slug) son obligatorios.");
+    if (!form.name.trim()) {
+      setError("Escribe el nombre del producto 💗");
       return;
     }
     setSaving(true);
     setError("");
+
+    const prevDetails = ((editing?.details as { label: string; value: string }[]) ?? []);
+    const details =
+      form.contenido.trim()
+        ? [{ label: prevDetails[0]?.label || "Contenido", value: form.contenido.trim() }]
+        : prevDetails;
+
     const payload = {
-      slug: form.slug.trim().toLowerCase().replace(/\s+/g, "-"),
+      slug: editing ? String(editing.slug) : slugify(form.name),
       name: form.name.trim(),
-      subtitle: form.subtitle.trim(),
+      subtitle: String(editing?.subtitle ?? "Cutis Radiante 7D 💗"),
       description: form.description.trim(),
       price: form.price === "" ? null : Number(form.price),
-      compare_price: form.compare_price === "" ? null : Number(form.compare_price),
+      compare_price: (editing?.compare_price as number | null) ?? null,
       main_image: form.main_image.trim(),
-      gallery: linesToList(form.gallery),
-      benefits: linesToList(form.benefits),
-      ingredients: linesToList(form.ingredients),
-      how_to_use: linesToList(form.how_to_use),
-      details: linesToDetails(form.details),
-      faqs: linesToFaqs(form.faqs),
+      gallery: ((editing?.gallery as string[]) ?? []) as string[],
+      benefits: ((editing?.benefits as string[]) ?? []) as string[],
+      ingredients: ((editing?.ingredients as string[]) ?? []) as string[],
+      how_to_use: ((editing?.how_to_use as string[]) ?? []) as string[],
+      details,
+      includes: linesToList(form.includes),
+      cta_label: form.cta_label.trim() || "Mándame mensaje",
+      wa_message: form.wa_message.trim(),
+      faqs: ((editing?.faqs as { q: string; a: string }[]) ?? []) as { q: string; a: string }[],
       visible: form.visible,
       sort_order: Number(form.sort_order) || 0,
     };
+
     const { error } = editing
-      ? await sb.from("products").update(payload).eq("id", (editing as Row).id as string)
+      ? await sb.from("products").update(payload).eq("id", editing.id as string)
       : await sb.from("products").insert(payload);
     setSaving(false);
     if (error) {
@@ -176,11 +174,12 @@ export default function AdminPage() {
     }
     setEditing(null);
     setForm(EMPTY);
+    setShowForm(false);
     loadAll();
   }
 
-  async function remove(id: string) {
-    if (!sb || !confirm("¿Eliminar este producto?")) return;
+  async function remove(id: string, name: string) {
+    if (!sb || !confirm(`¿Eliminar "${name}" de la página?`)) return;
     await sb.from("products").delete().eq("id", id);
     loadAll();
   }
@@ -192,20 +191,18 @@ export default function AdminPage() {
     const { error } = await sb.from("site_settings").update(settings).eq("id", 1);
     setSaving(false);
     if (error) setError(error.message);
-    else alert("Configuración guardada ✓");
+    else alert("Guardado ✓ Ya se ve en la página 💗");
   }
 
-  if (loading) return <Shell><p className="p-10 text-center">Cargando…</p></Shell>;
+  if (loading) return <Shell><p className="p-10 text-center">Cargando… 💗</p></Shell>;
 
   if (!envOk) {
     return (
       <Shell>
         <div className="mx-auto max-w-lg p-8 text-center">
-          <h1 className="font-serif text-2xl font-bold">Falta conectar Supabase</h1>
+          <h1 className="font-serif text-2xl font-bold">Falta conectar la tienda</h1>
           <p className="mt-3 text-sm leading-relaxed opacity-70">
-            Para usar el panel, configura en Vercel (o en <code>.env.local</code>) las variables
-            <code> NEXT_PUBLIC_SUPABASE_URL</code> y <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code>.
-            La página pública sigue funcionando con la información de las imágenes.
+            Pide al administrador que configure Supabase en Vercel.
           </p>
         </div>
       </Shell>
@@ -215,15 +212,32 @@ export default function AdminPage() {
   if (!session) {
     return (
       <Shell>
-        <form onSubmit={login} className="mx-auto mt-16 max-w-sm rounded-4xl border border-blush-200 bg-white p-8 shadow-card">
-          <h1 className="font-serif text-2xl font-bold text-cocoa-900">Entrar al panel</h1>
-          <p className="mt-1 text-sm text-cocoa-800/60">Solo la administradora. No hay registro público.</p>
-          <label className="label mt-5">Correo</label>
-          <input className="field" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <form onSubmit={login} className="mx-auto mt-14 max-w-sm rounded-4xl border border-blush-200 bg-white p-8 shadow-card">
+          <p className="text-center font-serif text-3xl">💗</p>
+          <h1 className="mt-2 text-center font-serif text-2xl font-bold text-cocoa-900">
+            Hola, entra aquí
+          </h1>
+          <label className="label mt-5">Usuario</label>
+          <input
+            className="field"
+            value={user}
+            onChange={(e) => setUser(e.target.value)}
+            placeholder="Tu usuario"
+            autoComplete="username"
+            required
+          />
           <label className="label mt-4">Contraseña</label>
-          <input className="field" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-          {error && <p className="mt-3 text-sm font-medium text-red-600">{error}</p>}
-          <button className="btn-primary mt-6 w-full">Entrar</button>
+          <input
+            className="field"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Tu contraseña"
+            autoComplete="current-password"
+            required
+          />
+          {error && <p className="mt-3 text-center text-sm font-medium text-red-600">{error}</p>}
+          <button className="btn-primary mt-6 w-full">Entrar 💗</button>
         </form>
       </Shell>
     );
@@ -231,129 +245,144 @@ export default function AdminPage() {
 
   return (
     <Shell>
-      <div className="mx-auto max-w-5xl px-5 py-8">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="mx-auto max-w-3xl px-5 py-8">
+        <div className="flex items-center justify-between gap-3">
           <div>
-            <h1 className="font-serif text-3xl font-bold text-cocoa-900">Panel · Cutis Radiante 7D</h1>
-            <p className="text-sm text-cocoa-800/60">Edita productos como un formulario sencillo. Los cambios se ven en la página al guardar.</p>
+            <h1 className="font-serif text-[26px] font-bold text-cocoa-900">Mis productos 💗</h1>
+            <p className="text-sm text-cocoa-800/60">Lo que cambies aquí se ve en la página.</p>
           </div>
           <button
-            className="rounded-full border border-blush-200 bg-white px-5 py-2.5 text-sm font-semibold"
+            className="rounded-full border border-blush-200 bg-white px-4 py-2 text-sm font-semibold"
             onClick={() => sb?.auth.signOut().then(() => setSession(null))}
           >
             Salir
           </button>
         </div>
 
-        <div className="mt-6 flex gap-2">
+        <div className="mt-5 flex gap-2">
           {(["products", "settings"] as const).map((t) => (
             <button
               key={t}
-              onClick={() => setTab(t)}
-              className={`rounded-full px-5 py-2.5 text-sm font-semibold ${tab === t ? "bg-cocoa-900 text-white" : "bg-white border border-blush-200"}`}
+              onClick={() => { setTab(t); setShowForm(false); }}
+              className={`rounded-full px-5 py-2.5 text-sm font-semibold ${tab === t ? "bg-cocoa-900 text-white" : "border border-blush-200 bg-white"}`}
             >
-              {t === "products" ? "Productos" : "Configuración"}
+              {t === "products" ? "💄 Productos" : "⚙️ Datos"}
             </button>
           ))}
         </div>
 
         {error && <p className="mt-4 rounded-2xl bg-red-50 p-4 text-sm font-medium text-red-700">{error}</p>}
 
-        {tab === "products" && (
-          <>
-            {/* Lista */}
-            <div className="mt-6 grid gap-3">
-              {products.map((p) => (
-                <div key={String(p.id)} className="flex items-center gap-4 rounded-3xl border border-blush-200 bg-white p-4 shadow-sm">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  {p.main_image ? <img src={String(p.main_image)} alt="" className="h-14 w-14 rounded-2xl object-cover" /> : <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-50 font-serif text-brand-500">CR</span>}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold text-cocoa-900">{String(p.name)}</p>
-                    <p className="text-xs text-cocoa-800/55">{(p.visible as boolean) ? "● Visible" : "○ Oculto"} · orden {String(p.sort_order)}</p>
-                  </div>
-                  <button onClick={() => startEdit(p)} className="rounded-full bg-brand-50 px-4 py-2 text-sm font-semibold text-brand-600">Editar</button>
-                  <button onClick={() => remove(String(p.id))} className="rounded-full px-3 py-2 text-sm text-red-500">Eliminar</button>
+        {tab === "products" && !showForm && (
+          <div className="mt-5 space-y-3">
+            {products.map((p) => (
+              <div key={String(p.id)} className="flex items-center gap-3 rounded-3xl border border-blush-200 bg-white p-4 shadow-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {p.main_image ? (
+                  <img src={String(p.main_image)} alt="" className="h-14 w-14 rounded-2xl object-cover" />
+                ) : (
+                  <span className="grid h-14 w-14 place-items-center rounded-2xl bg-brand-50 font-serif text-brand-500">CR</span>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold text-cocoa-900">{String(p.name)}</p>
+                  <p className="text-xs text-cocoa-800/55">
+                    {(p.price as number | null) != null ? `$${p.price} pesos` : "Sin precio"} · {(p.visible as boolean) ? "Se ve 👀" : "Oculto 🙈"}
+                  </p>
                 </div>
-              ))}
-              <button onClick={startNew} className="rounded-3xl border-2 border-dashed border-brand-200 p-5 font-semibold text-brand-600">+ Agregar producto</button>
+                <button onClick={() => startEdit(p)} className="shrink-0 rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-white">
+                  Editar
+                </button>
+                <button onClick={() => remove(String(p.id), String(p.name))} className="shrink-0 px-2 py-2 text-sm text-red-400" aria-label="Eliminar">
+                  🗑️
+                </button>
+              </div>
+            ))}
+            <button onClick={startNew} className="w-full rounded-3xl border-2 border-dashed border-brand-200 p-5 font-semibold text-brand-600">
+              + Agregar producto
+            </button>
+          </div>
+        )}
+
+        {tab === "products" && showForm && (
+          <form onSubmit={save} className="mt-5 rounded-4xl border border-blush-200 bg-white p-6 shadow-card">
+            <h2 className="font-serif text-xl font-bold">{editing ? "Editar producto" : "Nuevo producto"}</h2>
+
+            <label className="label mt-4">Nombre</label>
+            <input className="field" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ej: Crema Reparadora" />
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div>
+                <label className="label">Precio (pesos)</label>
+                <input className="field" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="180" />
+              </div>
+              <div>
+                <label className="label">Contenido</label>
+                <input className="field" value={form.contenido} onChange={(e) => setForm({ ...form, contenido: e.target.value })} placeholder="25 g" />
+              </div>
             </div>
 
-            {/* Formulario */}
-            {(editing || form.name !== "" || form.slug !== "") && (
-              <form onSubmit={save} className="mt-8 rounded-4xl border border-blush-200 bg-white p-6 shadow-card md:p-8">
-                <h2 className="font-serif text-2xl font-bold">{editing ? "Editar producto" : "Nuevo producto"}</h2>
-
-                <div className="mt-5 grid gap-4 md:grid-cols-2">
-                  <div><label className="label">Nombre *</label><input className="field" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ej: Crema Reparadora" /></div>
-                  <div><label className="label">Identificador (slug) *</label><input className="field" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} placeholder="ej: crema-reparadora" /><p className="hint">Minúsculas, sin espacios. Se genera una vez.</p></div>
-                </div>
-                <div className="mt-4"><label className="label">Subtítulo</label><input className="field" value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} placeholder="Ej: 100% Artesanal · 25 g" /></div>
-                <div className="mt-4"><label className="label">Descripción</label><textarea className="field min-h-24" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
-
-                <div className="mt-4 grid gap-4 md:grid-cols-3">
-                  <div><label className="label">Precio (opcional)</label><input className="field" type="number" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} placeholder="Vacío = no mostrar" /></div>
-                  <div><label className="label">Precio anterior (opcional)</label><input className="field" type="number" value={form.compare_price} onChange={(e) => setForm({ ...form, compare_price: e.target.value })} /></div>
-                  <div><label className="label">Orden</label><input className="field" type="number" value={form.sort_order} onChange={(e) => setForm({ ...form, sort_order: Number(e.target.value) })} /></div>
-                </div>
-
-                <div className="mt-4">
-                  <label className="label">Foto principal (URL)</label>
-                  <input className="field" value={form.main_image} onChange={(e) => setForm({ ...form, main_image: e.target.value })} placeholder="/images/crema.jpg o https://…" />
-                  <label className="mt-2 inline-flex cursor-pointer items-center gap-2 rounded-full bg-brand-50 px-4 py-2 text-sm font-semibold text-brand-600">
-                    {uploading ? "Subiendo…" : "📷 Subir foto"}
-                    <input type="file" accept="image/*" className="hidden" onChange={async (e) => {
-                      const f = e.target.files?.[0];
-                      if (f) setForm({ ...form, main_image: await uploadImage(f) });
-                    }} />
-                  </label>
-                  {form.main_image && <PreviewImage src={form.main_image} />}
-                </div>
-
-                <div className="mt-4 grid gap-4 md:grid-cols-2">
-                  <div><label className="label">Más fotos (una URL por línea)</label><textarea className="field min-h-20" value={form.gallery} onChange={(e) => setForm({ ...form, gallery: e.target.value })} /></div>
-                  <div><label className="label">Beneficios (uno por línea)</label><textarea className="field min-h-20" value={form.benefits} onChange={(e) => setForm({ ...form, benefits: e.target.value })} /></div>
-                  <div><label className="label">Ingredientes (uno por línea)</label><textarea className="field min-h-20" value={form.ingredients} onChange={(e) => setForm({ ...form, ingredients: e.target.value })} /></div>
-                  <div><label className="label">Modo de uso (un paso por línea)</label><textarea className="field min-h-20" value={form.how_to_use} onChange={(e) => setForm({ ...form, how_to_use: e.target.value })} /></div>
-                  <div><label className="label">Detalles (Etiqueta: valor, uno por línea)</label><textarea className="field min-h-20" value={form.details} onChange={(e) => setForm({ ...form, details: e.target.value })} placeholder={"Contenido: 25 g\nTipo de piel: Todo tipo"} /></div>
-                  <div><label className="label">Preguntas (Pregunta | Respuesta)</label><textarea className="field min-h-20" value={form.faqs} onChange={(e) => setForm({ ...form, faqs: e.target.value })} /></div>
-                </div>
-
-                <label className="mt-5 flex items-center gap-3 rounded-2xl bg-brand-50/60 p-4 text-sm font-semibold">
-                  <input type="checkbox" checked={form.visible} onChange={(e) => setForm({ ...form, visible: e.target.checked })} className="h-5 w-5 accent-pink-600" />
-                  Visible en la página
-                </label>
-
-                <div className="mt-6 flex gap-3">
-                  <button disabled={saving} className="btn-primary flex-1">{saving ? "Guardando…" : "Guardar"}</button>
-                  <button type="button" onClick={() => { setEditing(null); setForm(EMPTY); }} className="btn-ghost">Cancelar</button>
-                </div>
-              </form>
+            <label className="label mt-4">Foto</label>
+            {form.main_image && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={form.main_image} alt="Vista previa" className="mb-2 h-28 w-28 rounded-2xl border border-blush-200 object-cover" />
             )}
-          </>
+            <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white">
+              {uploading ? "Subiendo…" : "📷 Cambiar foto"}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (f) setForm({ ...form, main_image: await uploadImage(f) });
+                }}
+              />
+            </label>
+
+            <label className="label mt-4">Descripción</label>
+            <textarea className="field min-h-20" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+
+            <label className="label mt-4">Si es kit: lo que incluye (uno por línea)</label>
+            <textarea className="field min-h-20" value={form.includes} onChange={(e) => setForm({ ...form, includes: e.target.value })} placeholder="🧴 Exfoliante…" />
+
+            <label className="label mt-4">Texto del botón</label>
+            <input className="field" value={form.cta_label} onChange={(e) => setForm({ ...form, cta_label: e.target.value })} placeholder="Mándame mensaje" />
+
+            <label className="mt-4 flex items-center gap-3 rounded-2xl bg-brand-50/60 p-4 text-sm font-semibold">
+              <input type="checkbox" checked={form.visible} onChange={(e) => setForm({ ...form, visible: e.target.checked })} className="h-5 w-5 accent-pink-600" />
+              Se ve en la página 👀
+            </label>
+
+            <div className="mt-5 flex gap-3">
+              <button disabled={saving} className="btn-primary flex-1 !py-3.5">
+                {saving ? "Guardando…" : "Guardar 💗"}
+              </button>
+              <button type="button" onClick={() => { setShowForm(false); setEditing(null); setForm(EMPTY); }} className="btn-ghost">
+                Atrás
+              </button>
+            </div>
+          </form>
         )}
 
         {tab === "settings" && settings && (
-          <form onSubmit={saveSettings} className="mt-6 rounded-4xl border border-blush-200 bg-white p-6 shadow-card md:p-8">
-            <h2 className="font-serif text-2xl font-bold">Configuración general</h2>
-            <div className="mt-5 grid gap-4">
-              <div><label className="label">Nombre de la marca</label><input className="field" value={String(settings.brand_name ?? "")} onChange={(e) => setSettings({ ...settings, brand_name: e.target.value })} /></div>
-              <div><label className="label">Número de WhatsApp (con código país, sin +)</label><input className="field" value={String(settings.whatsapp_number ?? "")} onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value.replace(/\D/g, "") })} placeholder="573132151401" /><p className="hint">Actual: 573132151401 (313 215 1401 · Colombia).</p></div>
-              <div><label className="label">Mensaje de WhatsApp</label><input className="field" value={String(settings.whatsapp_message ?? "")} onChange={(e) => setSettings({ ...settings, whatsapp_message: e.target.value })} /><p className="hint">Usa {"{producto}"} donde va el nombre del producto.</p></div>
-              <div><label className="label">Instagram (opcional)</label><input className="field" value={String(settings.instagram ?? "")} onChange={(e) => setSettings({ ...settings, instagram: e.target.value })} placeholder="@cutisradiante7d o vacío" /></div>
-              <div><label className="label">Texto corto del footer</label><input className="field" value={String(settings.footer_text ?? "")} onChange={(e) => setSettings({ ...settings, footer_text: e.target.value })} /></div>
-            </div>
-            <button disabled={saving} className="btn-primary mt-6">{saving ? "Guardando…" : "Guardar configuración"}</button>
+          <form onSubmit={saveSettings} className="mt-5 rounded-4xl border border-blush-200 bg-white p-6 shadow-card">
+            <h2 className="font-serif text-xl font-bold">Datos de la tienda</h2>
+            <label className="label mt-4">Número de WhatsApp</label>
+            <input className="field" value={String(settings.whatsapp_number ?? "")} onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value.replace(/\D/g, "") })} />
+            <p className="hint">Con código de país, sin + ni espacios. Ej: 573132151401</p>
+            <label className="label mt-4">Mensaje automático</label>
+            <input className="field" value={String(settings.whatsapp_message ?? "")} onChange={(e) => setSettings({ ...settings, whatsapp_message: e.target.value })} />
+            <p className="hint">{"{producto}"} se cambia solo por el nombre del producto.</p>
+            <label className="label mt-4">Instagram (si tienes, si no déjalo vacío)</label>
+            <input className="field" value={String(settings.instagram ?? "")} onChange={(e) => setSettings({ ...settings, instagram: e.target.value })} />
+            <button disabled={saving} className="btn-primary mt-5 w-full !py-3.5">
+              {saving ? "Guardando…" : "Guardar 💗"}
+            </button>
           </form>
         )}
       </div>
     </Shell>
   );
-}
-
-function PreviewImage({ src }: { src: string }) {
-  if (!src) return null;
-  // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt="Vista previa" className="mt-3 h-32 w-32 rounded-2xl border border-blush-200 object-cover" />;
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
