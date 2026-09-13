@@ -4,6 +4,7 @@ import Image from "next/image";
 import type { Product } from "@/lib/types";
 import { buildWaLink } from "@/lib/whatsapp";
 import Reveal from "./Reveal";
+import LikeButton from "./LikeButton";
 
 export function formatPrice(v: number | null): string {
   if (v == null) return "";
@@ -48,10 +49,12 @@ export function Catalogo({
   products,
   waNumber,
   waMessage,
+  likes,
 }: {
   products: Product[];
   waNumber: string;
   waMessage: string;
+  likes: Record<string, number>;
 }) {
   const singles = products.filter((p) => p.includes.length === 0);
   const kits = products.filter((p) => p.includes.length > 0);
@@ -89,6 +92,9 @@ export function Catalogo({
                         {grams}
                       </span>
                     )}
+                    <span className="absolute right-3 top-3">
+                      <LikeButton slug={p.slug} count={likes[p.slug] ?? 0} />
+                    </span>
                   </div>
                 )}
 
@@ -180,6 +186,9 @@ export function Catalogo({
                 >
                   {p.cta_label || "Quiero apartar mi kit"}
                 </a>
+                <div className="mt-3 flex justify-center">
+                  <LikeButton slug={p.slug} count={likes[p.slug] ?? 0} />
+                </div>
               </div>
             </div>
           </article>

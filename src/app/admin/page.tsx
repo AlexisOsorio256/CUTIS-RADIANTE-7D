@@ -32,6 +32,8 @@ type Settings = {
   footer_text: string;
 };
 
+type Metrics = { visits: number; likes: Record<string, number>; totalLikes: number };
+
 const EMPTY = {
   name: "",
   price: "",
@@ -51,12 +53,13 @@ export default function AdminPage() {
   const [ok, setOk] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [metrics, setMetrics] = useState<Metrics | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [tab, setTab] = useState<"products" | "settings">("products");
+  const [tab, setTab] = useState<"resumen" | "products" | "settings">("resumen");
 
   useEffect(() => {
     fetch("/api/admin/me")
@@ -76,9 +79,18 @@ export default function AdminPage() {
     setSettings(d.settings);
   }
 
+  async function loadMetrics() {
+    const r = await fetch("/api/admin/metrics");
+    if (!r.ok) return;
+    setMetrics(await r.json());
+  }
+
   useEffect(() => {
-    if (logged) loadAll();
-  }, [logged ]);
+    if (logged) {
+      loadAll();
+      loadMetrics();
+    }
+  }, [logged]);
 
   async function login(e: React.FormEvent) {
     e.preventDefault();
@@ -271,6 +283,9 @@ export default function AdminPage() {
           <h1 className="mt-2 text-center font-serif text-2xl font-bold text-cocoa-900">
             Hola, entra aquí
           </h1>
+          <p className="mt-1 text-center text-xs font-semibold uppercase tracking-[0.2em] text-cocoa-800/45">
+            🔒 Solo administradora
+          </p>
           <label className="label mt-5">Usuario</label>
           <input
             className="field"
@@ -297,36 +312,119 @@ export default function AdminPage() {
     );
   }
 
+  const top = [...products]
+    .map((p) => ({ ...p, likes: metrics ? Number(metrics.likes[p.slug] ?? 0) : 0 }))
+    .sort((a, b) => b.likes - a.likes);
+  const maxLikes = Math.max(1, ...top.map((p) => p.likes));
+
   return (
     <Shell>
       <div className="mx-auto max-w-3xl px-5 py-8">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="font-serif text-[26px] font-bold text-cocoa-900">Mis productos 💗</h1>
-            <p className="text-sm text-cocoa-800/60">Lo que guardes se publica solo en 1-2 min.</p>
+        {/* Encabezado: deja claro que está en administrador */}
+        <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-600 via-brand-500 to-cocoa-900 p-6 text-white shadow-float md:p-7">
+          <div aria-hidden className="pointer-events-none absolute inset-0 opacity-25">
+            <div className="absolute -right-10 -top-14 h-48 w-48 rounded-full bg-white/30 blur-3xl" />
           </div>
-          <button
-            className="rounded-full border border-blush-200 bg-white px-4 py-2 text-sm font-semibold"
-            onClick={logout}
-          >
-            Salir
-          </button>
+          <div className="relative flex items-start justify-between gap-3">
+            <div>
+              <p className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.2em] backdrop-blur">
+                🔒 Modo administrador
+              </p>
+              <h1 className="mt-2.5 font-serif text-[24px] font-bold leading-tight md:text-[28px]">
+                Bienvenida Sussy a tu panel de control 💗
+              </h1>
+            </div>
+            <button
+              className="shrink-0 rounded-full bg-white/15 px-4 py-2 text-sm font-semibold backdrop-blur transition hover:bg-white/25"
+              onClick={logout}
+            >
+              Salir
+            </button>
+          </div>
         </div>
 
         <div className="mt-5 flex gap-2">
-          {(["products", "settings"] as const).map((t) => (
+          {(
+            [
+              ["resumen", "📊 Resumen"],
+              ["products", "💄 Productos"],
+              ["settings", "⚙️ Datos"],
+            ] as const
+          ).map(([t, label]) => (
             <button
               key={t}
-              onClick={() => { setTab(t); setShowForm(false); setOk(""); setError(""); }}
-              className={`rounded-full px-5 py-2.5 text-sm font-semibold ${tab === t ? "bg-cocoa-900 text-white" : "border border-blush-200 bg-white"}`}
+              onClick={() => { setTab(t); setShowForm(false); setOk(""); setError(""); if (t === "resumen") loadMetrics(); }}
+              className={`rounded-full px-4 py-2.5 text-sm font-semibold sm:px-5 ${tab === t ? "bg-cocoa-900 text-white" : "border border-blush-200 bg-white"}`}
             >
-              {t === "products" ? "💄 Productos" : "⚙️ Datos"}
+              {label}
             </button>
           ))}
         </div>
 
         {error && <p className="mt-4 rounded-2xl bg-red-50 p-4 text-sm font-medium text-red-700">{error}</p>}
         {ok && <p className="mt-4 rounded-2xl bg-green-50 p-4 text-sm font-medium text-green-700">{ok}</p>}
+
+        {tab === "resumen" && (
+          <div className="mt-5">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="card p-4 text-center sm:p-5">
+                <p className="text-2xl sm:text-3xl">👀</p>
+                <p className="mt-1 font-serif text-2xl font-bold text-cocoa-900 sm:text-3xl">
+                  {metrics ? metrics.visits.toLocaleString("es-MX") : "…"}
+                </p>
+                <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-wider text-cocoa-800/55 sm:text-xs">
+                  Visitas
+                </p>
+              </div>
+              <div className="card p-4 text-center sm:p-5">
+                <p className="text-2xl sm:text-3xl">💗</p>
+                <p className="mt-1 font-serif text-2xl font-bold text-cocoa-900 sm:text-3xl">
+                  {metrics ? metrics.totalLikes.toLocaleString("es-MX") : "…"}
+                </p>
+                <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-wider text-cocoa-800/55 sm:text-xs">
+                  Me gustas
+                </p>
+              </div>
+              <div className="card p-4 text-center sm:p-5">
+                <p className="text-2xl sm:text-3xl">🛍️</p>
+                <p className="mt-1 font-serif text-2xl font-bold text-cocoa-900 sm:text-3xl">
+                  {products.filter((p) => p.visible).length}
+                </p>
+                <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-wider text-cocoa-800/55 sm:text-xs">
+                  A la venta
+                </p>
+              </div>
+            </div>
+
+            <div className="card mt-4 p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="font-serif text-lg font-bold text-cocoa-900">Lo más querido 💗</h2>
+                <button onClick={loadMetrics} className="rounded-full bg-brand-50 px-4 py-1.5 text-xs font-bold text-brand-600">
+                  🔄 Actualizar
+                </button>
+              </div>
+              <div className="mt-4 space-y-3">
+                {top.map((p) => (
+                  <div key={p.id}>
+                    <div className="flex items-center justify-between gap-2 text-sm">
+                      <p className="truncate font-semibold text-cocoa-900">{p.name}</p>
+                      <p className="shrink-0 font-bold text-brand-600">💗 {p.likes}</p>
+                    </div>
+                    <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-brand-50">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-brand-400 to-brand-600 transition-all duration-700"
+                        style={{ width: `${Math.round((p.likes / maxLikes) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-4 text-xs leading-relaxed text-cocoa-800/55">
+                👀 Visitas = veces que abrieron tu página. 💗 Me gustas = corazones que tocaron tus clientas en cada producto.
+              </p>
+            </div>
+          </div>
+        )}
 
         {tab === "products" && !showForm && (
           <div className="mt-5 space-y-3">
@@ -341,7 +439,7 @@ export default function AdminPage() {
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-semibold text-cocoa-900">{p.name}</p>
                   <p className="text-xs text-cocoa-800/55">
-                    {p.price != null ? `$${p.price} pesos` : "Sin precio"} · {p.visible ? "Se ve 👀" : "Oculto 🙈"}
+                    {p.price != null ? `$${p.price} pesos` : "Sin precio"} · 💗 {metrics ? Number(metrics.likes[p.slug] ?? 0) : "…"} · {p.visible ? "Se ve 👀" : "Oculto 🙈"}
                   </p>
                 </div>
                 <button onClick={() => startEdit(p)} className="shrink-0 rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-white">

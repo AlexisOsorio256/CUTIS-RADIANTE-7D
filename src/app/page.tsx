@@ -1,5 +1,7 @@
 import tienda from "@/data/tienda.json";
 import type { Product, SiteSettings } from "@/lib/types";
+import { getMetrics } from "@/lib/metrics";
+import VisitTracker from "@/components/VisitTracker";
 import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
@@ -35,12 +37,13 @@ function normalize(row: Record<string, unknown>): Product {
   };
 }
 
-export default function Home() {
+export default async function Home() {
   const settings = tienda.settings as SiteSettings;
   const products = (tienda.products as Record<string, unknown>[])
     .map(normalize)
     .filter((p) => p.visible)
     .sort((a, b) => a.sort_order - b.sort_order);
+  const metrics = await getMetrics();
 
   if (products.length === 0) {
     return (
@@ -55,6 +58,7 @@ export default function Home() {
 
   return (
     <main>
+      <VisitTracker />
       <Navbar
         brand={settings.brand_name}
         waNumber={settings.whatsapp_number}
@@ -70,6 +74,7 @@ export default function Home() {
         products={products}
         waNumber={settings.whatsapp_number}
         waMessage={settings.whatsapp_message}
+        likes={metrics.likes}
       />
       <Mayoreo waNumber={settings.whatsapp_number} waMessage={settings.whatsapp_message} />
       <Ritual />
