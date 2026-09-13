@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { buildWaLink } from "@/lib/whatsapp";
 
 type Props = {
@@ -8,25 +7,25 @@ type Props = {
 };
 
 /**
- * Hero de marca con presencia: título grande en degradado rosa,
- * destellos suaves y la foto del kit como protagonista.
- * Nada flota fuera de su caja en móvil.
+ * Hero tipográfico de marca: título grande en degradado rosa,
+ * destellos suaves y botones claros. Sin foto para no duplicar
+ * la imagen del kit (esa vive en Productos).
  */
 export default function Hero({ brand, waNumber, waMessage }: Props) {
   const [name, tail] = splitBrand(brand);
 
   return (
-    <section id="inicio" className="relative overflow-hidden pb-12 pt-24 md:pt-32">
+    <section id="inicio" className="relative overflow-hidden pb-12 pt-24 md:pb-16 md:pt-32">
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="blob absolute -top-28 left-1/2 h-[420px] w-[720px] -translate-x-1/2 rounded-full bg-gradient-to-b from-blush-200/80 via-brand-100/50 to-transparent blur-2xl" />
         <span className="float-soft absolute left-[8%] top-32 text-2xl opacity-70">✨</span>
         <span className="float-soft absolute right-[10%] top-44 text-xl opacity-60" style={{ animationDelay: "-2s" }}>
           💗
         </span>
-        <span className="float-soft absolute left-[14%] top-[430px] hidden text-lg opacity-50 sm:block" style={{ animationDelay: "-4s" }}>
+        <span className="float-soft absolute left-[16%] top-[380px] hidden text-lg opacity-50 sm:block" style={{ animationDelay: "-4s" }}>
           ✦
         </span>
-        <span className="float-soft absolute right-[13%] top-[400px] hidden text-lg opacity-50 sm:block" style={{ animationDelay: "-1s" }}>
+        <span className="float-soft absolute right-[15%] top-[360px] hidden text-lg opacity-50 sm:block" style={{ animationDelay: "-1s" }}>
           ✦
         </span>
       </div>
@@ -38,13 +37,13 @@ export default function Hero({ brand, waNumber, waMessage }: Props) {
         </p>
 
         <h1 className="hero-enter hero-enter-1 mt-6">
-          <span className="block bg-gradient-to-b from-brand-700 via-brand-500 to-brand-300 bg-clip-text font-serif text-[52px] font-black leading-[0.98] tracking-tight text-transparent sm:text-7xl lg:text-[86px]">
+          <span className="block bg-gradient-to-b from-brand-700 via-brand-500 to-brand-300 bg-clip-text font-serif text-[56px] font-black leading-[0.98] tracking-tight text-transparent sm:text-8xl lg:text-[96px]">
             {name}
           </span>
           {tail && (
             <span className="mt-3 flex items-center justify-center gap-4">
               <span aria-hidden className="h-px w-14 bg-gradient-to-r from-transparent to-brand-400 sm:w-24" />
-              <span className="font-serif text-4xl font-bold italic text-brand-600 sm:text-5xl">
+              <span className="font-serif text-4xl font-bold italic text-brand-600 sm:text-6xl">
                 {tail} <span className="not-italic">✨</span>
               </span>
               <span aria-hidden className="h-px w-14 bg-gradient-to-l from-transparent to-brand-400 sm:w-24" />
@@ -52,7 +51,7 @@ export default function Hero({ brand, waNumber, waMessage }: Props) {
           )}
         </h1>
 
-        <p className="hero-enter hero-enter-2 mx-auto mt-5 max-w-xl text-[17px] leading-relaxed text-cocoa-800/75">
+        <p className="hero-enter hero-enter-2 mx-auto mt-5 max-w-xl text-[17px] leading-relaxed text-cocoa-800/75 md:text-lg">
           Piel suave, hidratada y luminosa: tu rutina facial completa
           en fórmulas artesanales 💗
         </p>
@@ -71,24 +70,8 @@ export default function Hero({ brand, waNumber, waMessage }: Props) {
             Ver productos
           </a>
         </div>
-      </div>
 
-      {/* Foto del kit: protagonista, con sello DENTRO de la imagen */}
-      <div className="hero-enter hero-enter-3 relative mx-auto mt-10 w-full max-w-4xl px-5">
-        <div className="photo-frame float-soft aspect-[4/3] sm:aspect-[16/10]">
-          <Image
-            src="/images/kit-facial.jpg"
-            alt="Kit de Cuidado Facial Cutis Radiante 7D"
-            fill
-            priority
-            sizes="(max-width: 768px) 92vw, 900px"
-            className="object-cover"
-          />
-          <span className="absolute left-4 top-4 rounded-full bg-white/90 px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-brand-600 shadow-card">
-            Kit de cuidado facial
-          </span>
-        </div>
-        <p className="mt-4 text-center text-sm text-cocoa-800/60">
+        <p className="hero-enter hero-enter-3 mt-5 text-sm text-cocoa-800/60">
           100% artesanal · Precios en pesos · El envío se paga por separado
         </p>
       </div>

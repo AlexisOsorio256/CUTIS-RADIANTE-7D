@@ -32,7 +32,7 @@ export function Marquee() {
   );
 }
 
-/* ---------- Catálogo ---------- */
+/* ---------- Catálogo: todos los productos con el mismo diseño ---------- */
 export function Catalogo({
   products,
   waNumber,
@@ -44,9 +44,6 @@ export function Catalogo({
   waMessage: string;
   likes: Record<string, number>;
 }) {
-  const singles = products.filter((p) => p.includes.length === 0);
-  const kits = products.filter((p) => p.includes.length > 0);
-
   return (
     <section id="productos" className="mx-auto max-w-6xl px-5 py-12 md:py-16 lg:px-8">
       <Reveal className="mx-auto max-w-2xl text-center">
@@ -57,7 +54,7 @@ export function Catalogo({
       </Reveal>
 
       <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {singles.map((p, i) => {
+        {products.map((p, i) => {
           const grams = p.details.find(
             (d) => d.label.toLowerCase().includes("contenido") || d.label.toLowerCase().includes("presentación")
           )?.value;
@@ -96,6 +93,16 @@ export function Catalogo({
                     {p.description}
                   </p>
 
+                  {p.includes.length > 0 && (
+                    <ul className="mt-3 space-y-1.5 rounded-2xl bg-brand-50/70 p-4">
+                      {p.includes.map((inc) => (
+                        <li key={inc} className="text-[13.5px] font-medium text-cocoa-900/85">
+                          {inc}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
                   <div className="mt-4 flex items-end justify-between gap-3 border-t border-blush-100 pt-4">
                     <div>
                       {p.price != null && (
@@ -125,59 +132,6 @@ export function Catalogo({
             </Reveal>
           );
         })}
-
-        {/* Kit dentro de los productos: tarjeta panorámica sin foto repetida */}
-        {kits.map((p) => (
-          <Reveal key={p.slug} className="sm:col-span-2 lg:col-span-3">
-          <article data-buy={p.slug} className="relative overflow-hidden rounded-[2rem] border border-white/60 bg-gradient-to-br from-brand-500 via-brand-600 to-cocoa-900 p-7 text-white shadow-float md:p-10">
-            <div aria-hidden className="pointer-events-none absolute inset-0 opacity-25">
-              <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/30 blur-3xl" />
-              <div className="absolute -bottom-20 -left-10 h-64 w-64 rounded-full bg-white/20 blur-3xl" />
-            </div>
-            <div className="relative grid gap-7 md:grid-cols-[1.2fr_0.8fr] md:items-center">
-              <div>
-                <h3 className="font-serif text-3xl font-bold md:text-4xl">{p.name}</h3>
-                <p className="mt-1 text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
-                  {p.subtitle}
-                </p>
-                <p className="mt-3 max-w-lg text-[15px] leading-relaxed text-white/85">
-                  {p.description}
-                </p>
-                <ul className="mt-4 grid gap-2 sm:grid-cols-2">
-                  {p.includes.map((inc) => (
-                    <li
-                      key={inc}
-                      className="rounded-2xl bg-white/12 px-4 py-2.5 text-[14px] font-medium backdrop-blur"
-                    >
-                      {inc}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="glass rounded-[1.75rem] p-6 text-center text-cocoa-900 md:p-8">
-                {p.price != null && (
-                  <p className="font-serif text-5xl font-bold">{formatPrice(p.price)}</p>
-                )}
-                <p className="mt-1 text-sm font-semibold text-cocoa-800/60">
-                  pesos · Kit de 5 piezas
-                </p>
-                <p className="mt-2 text-xs text-cocoa-800/55">📦 El envío se paga por separado</p>
-                <a
-                  href={productLink(p, waNumber, waMessage)}
-                  target="_blank"
-                  rel="noopener"
-                  className="btn-primary beat mt-5 w-full !py-4"
-                >
-                  {p.cta_label || "Quiero apartar mi kit"}
-                </a>
-                <div className="mt-3 flex justify-center">
-                  <LikeButton slug={p.slug} count={likes[p.slug] ?? 0} />
-                </div>
-              </div>
-            </div>
-          </article>
-        </Reveal>
-      ))}
       </div>
     </section>
   );
@@ -251,5 +205,3 @@ export function Ritual() {
     </section>
   );
 }
-
-

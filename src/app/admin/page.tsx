@@ -41,7 +41,6 @@ const EMPTY = {
   description: "",
   contenido: "",
   includes: "",
-  cta_label: "",
 };
 
 export default function AdminPage() {
@@ -120,7 +119,7 @@ export default function AdminPage() {
 
   function startNew() {
     setEditingId(null);
-    setForm({ ...EMPTY, cta_label: "Mándame mensaje" });
+    setForm({ ...EMPTY });
     setShowForm(true);
     setError("");
     setOk("");
@@ -136,7 +135,6 @@ export default function AdminPage() {
       description: p.description,
       contenido: firstDetail(p),
       includes: listToLines(p.includes),
-      cta_label: p.cta_label || "Mándame mensaje",
     });
     setShowForm(true);
     setError("");
@@ -192,6 +190,7 @@ export default function AdminPage() {
       visible: true,
       sort_order: products.length,
     };
+    const isKit = (prev?.includes?.length ?? 0) > 0 || linesToList(form.includes).length > 0;
     const updated: Product = {
       ...base,
       name: form.name.trim(),
@@ -201,8 +200,7 @@ export default function AdminPage() {
       details: form.contenido.trim()
         ? [{ label: base.details[0]?.label || "Contenido", value: form.contenido.trim() }]
         : base.details,
-      includes: linesToList(form.includes),
-      cta_label: form.cta_label.trim() || "Mándame mensaje",
+      includes: isKit ? linesToList(form.includes) : base.includes,
     };
     if (editingId) return products.map((p) => (p.id === editingId ? updated : p));
     return [...products, updated];
@@ -308,6 +306,9 @@ export default function AdminPage() {
           {error && <p className="mt-3 text-center text-sm font-medium text-red-600">{error}</p>}
           <button className="btn-primary mt-6 w-full">Entrar 💗</button>
         </form>
+        <a href="/" className="btn-ghost mx-auto mt-3 flex max-w-sm !py-3">
+          ← Volver a la página
+        </a>
       </Shell>
     );
   }
@@ -316,6 +317,8 @@ export default function AdminPage() {
     .map((p) => ({ ...p, likes: metrics ? Number(metrics.likes[p.slug] ?? 0) : 0 }))
     .sort((a, b) => b.likes - a.likes);
   const maxLikes = Math.max(1, ...top.map((p) => p.likes));
+  const editingHasIncludes =
+    (editingId ? (products.find((p) => p.id === editingId)?.includes.length ?? 0) : 0) > 0;
 
   return (
     <Shell>
@@ -493,13 +496,14 @@ export default function AdminPage() {
             </label>
 
             <label className="label mt-4">Descripción</label>
-            <textarea className="field min-h-20" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            <textarea className="field min-h-20" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="¿Para qué sirve? Escríbelo con tus palabras 💗" />
 
-            <label className="label mt-4">Si es kit: lo que incluye (uno por línea)</label>
-            <textarea className="field min-h-20" value={form.includes} onChange={(e) => setForm({ ...form, includes: e.target.value })} placeholder="🧴 Exfoliante…" />
-
-            <label className="label mt-4">Texto del botón</label>
-            <input className="field" value={form.cta_label} onChange={(e) => setForm({ ...form, cta_label: e.target.value })} placeholder="Mándame mensaje" />
+            {(editingHasIncludes || form.includes.trim()) && (
+              <>
+                <label className="label mt-4">El kit incluye (uno por línea)</label>
+                <textarea className="field min-h-20" value={form.includes} onChange={(e) => setForm({ ...form, includes: e.target.value })} />
+              </>
+            )}
 
             <div className="mt-5 flex gap-3">
               <button disabled={saving} className="btn-primary flex-1 !py-3.5">
@@ -518,9 +522,6 @@ export default function AdminPage() {
             <label className="label mt-4">Número de WhatsApp</label>
             <input className="field" value={settings.whatsapp_number} onChange={(e) => setSettings({ ...settings, whatsapp_number: e.target.value.replace(/\D/g, "") })} />
             <p className="hint">Con código de país, sin + ni espacios. Ej: 523132151401</p>
-            <label className="label mt-4">Mensaje automático</label>
-            <input className="field" value={settings.whatsapp_message} onChange={(e) => setSettings({ ...settings, whatsapp_message: e.target.value })} />
-            <p className="hint">{"{producto}"} se cambia solo por el nombre del producto.</p>
             <label className="label mt-4">Instagram (si tienes, si no déjalo vacío)</label>
             <input className="field" value={settings.instagram} onChange={(e) => setSettings({ ...settings, instagram: e.target.value })} />
             <button disabled={saving} className="btn-primary mt-5 w-full !py-3.5">
