@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Image from "next/image";
 import type { Product } from "@/lib/types";
 import { buildWaLink } from "@/lib/whatsapp";
@@ -133,11 +132,10 @@ export function Catalogo({
             </Reveal>
           );
         })}
-      </div>
 
-      {/* Kits: tarjeta especial panorámica, sin foto repetida */}
-      {kits.map((p) => (
-        <Reveal key={p.slug} className="mt-5">
+        {/* Kit dentro de los productos: tarjeta panorámica sin foto repetida */}
+        {kits.map((p) => (
+          <Reveal key={p.slug} className="sm:col-span-2 lg:col-span-3">
           <article className="relative overflow-hidden rounded-[2rem] border border-white/60 bg-gradient-to-br from-brand-500 via-brand-600 to-cocoa-900 p-7 text-white shadow-float md:p-10">
             <div aria-hidden className="pointer-events-none absolute inset-0 opacity-25">
               <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/30 blur-3xl" />
@@ -187,6 +185,7 @@ export function Catalogo({
           </article>
         </Reveal>
       ))}
+      </div>
     </section>
   );
 }
@@ -260,110 +259,4 @@ export function Ritual() {
   );
 }
 
-/* ---------- Preguntas (compacto) ---------- */
-export function Faq() {
-  const [open, setOpen] = useState(0);
-  const list = [
-    {
-      q: "¿Cómo pido por WhatsApp?",
-      a: "Toca el botón del producto que quieres. Se abre el chat con el mensaje listo, solo envíalo y te confirmamos tu pedido.",
-    },
-    {
-      q: "¿Cuánto cuesta el envío?",
-      a: "El envío se paga por separado. Mándanos mensaje y te decimos cuánto es a tu zona.",
-    },
-    {
-      q: "¿Tienen precios de mayoreo?",
-      a: "Sí 💗 A partir de 10 piezas del mismo producto. Pide los precios por WhatsApp.",
-    },
-    {
-      q: "¿Cada cuánto uso el exfoliante?",
-      a: "Solo 2 veces por semana: masajea, deja reposar 3 minutos y enjuaga. No lo uses en piel irritada.",
-    },
-  ];
-  return (
-    <section id="preguntas" className="mx-auto max-w-3xl px-5 py-12 md:py-16">
-      <Reveal className="text-center">
-        <p className="eyebrow">Preguntas frecuentes</p>
-        <h2 className="mt-4 font-serif text-3xl font-bold text-cocoa-900 md:text-[36px]">
-          ¿Tienes dudas?
-        </h2>
-      </Reveal>
-      <div className="mt-7 space-y-3">
-        {list.map((f, i) => {
-          const isOpen = open === i;
-          return (
-            <Reveal key={f.q} delay={i * 50}>
-              <div className={`card overflow-hidden !rounded-3xl ${isOpen ? "faq-open" : ""}`}>
-                <button
-                  onClick={() => setOpen(isOpen ? -1 : i)}
-                  aria-expanded={isOpen}
-                  className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
-                >
-                  <span className="font-semibold text-cocoa-900">{f.q}</span>
-                  <span className="faq-chevron grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-50 text-lg text-brand-600">
-                    ⌄
-                  </span>
-                </button>
-                <div className="faq-answer">
-                  <div>
-                    <p className="px-6 pb-6 text-[15px] leading-relaxed text-cocoa-800/75">{f.a}</p>
-                  </div>
-                </div>
-              </div>
-            </Reveal>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
 
-/* ---------- Contacto final ---------- */
-export function Contacto({
-  brand,
-  waNumber,
-  waMessage,
-  footerText,
-}: {
-  brand: string;
-  waNumber: string;
-  waMessage: string;
-  footerText: string;
-}) {
-  return (
-    <section id="contacto" className="px-5 pb-14 md:pb-20">
-      <Reveal>
-        <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand-600 via-brand-500 to-[#e78fa2] px-6 py-12 text-center text-white shadow-float md:py-16">
-          <div aria-hidden className="pointer-events-none absolute inset-0 opacity-25">
-            <div className="absolute -left-16 -top-16 h-64 w-64 rounded-full bg-white/30 blur-3xl" />
-            <div className="absolute -bottom-20 -right-10 h-72 w-72 rounded-full bg-white/25 blur-3xl" />
-          </div>
-          <p className="relative text-xs font-bold uppercase tracking-[0.28em] text-white/85">
-            🤍 {brand}
-          </p>
-          <h2 className="relative mx-auto mt-3 max-w-2xl font-serif text-3xl font-bold leading-tight md:text-[42px]">
-            Mándame mensaje y aparta lo tuyo 💗
-          </h2>
-          <p className="relative mx-auto mt-3 max-w-xl text-[15px] text-white/85">{footerText}</p>
-          <a
-            href={buildWaLink(waNumber, waMessage)}
-            target="_blank"
-            rel="noopener"
-            className="beat relative mx-auto mt-7 inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-8 py-4 font-semibold text-brand-600 shadow-lg transition hover:-translate-y-0.5 sm:w-auto"
-          >
-            <WaSmall /> Escríbenos ahora
-          </a>
-        </div>
-      </Reveal>
-    </section>
-  );
-}
-
-function WaSmall() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-      <path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.2 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.4-.7-2.9-1.2-4.7-4.1-4.9-4.3-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5s.8 1.9.8 2c.1.1.1.3 0 .5-.3.6-.6.8-.4 1.1.6 1.1 1.4 1.8 2.5 2.4.3.1.5 0 .7-.2l.8-.9c.2-.3.4-.2.7-.1l1.9.9c.3.1.5.2.5.3 0 .2 0 .7-.6 1.8Z" />
-    </svg>
-  );
-}

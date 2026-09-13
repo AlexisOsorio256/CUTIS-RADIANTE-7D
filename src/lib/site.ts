@@ -29,7 +29,7 @@ export function loginToEmail(input: string): string {
 export const NAV_LINKS = [
   { href: "#productos", label: "Productos" },
   { href: "#mayoreo", label: "Mayoreo" },
-  { href: "#contacto", label: "Contacto" },
+  { href: "#ritual", label: "Cómo usar" },
 ];
 
 export const LOGO_IMAGE = "/images/crema-reparadora-etiqueta.jpg";

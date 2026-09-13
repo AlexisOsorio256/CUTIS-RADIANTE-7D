@@ -4,7 +4,7 @@ import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
 import StickyBuyBar from "@/components/StickyBuyBar";
-import { Catalogo, Mayoreo, Ritual, Faq, Contacto, Marquee } from "@/components/HomeSections";
+import { Catalogo, Mayoreo, Ritual, Marquee } from "@/components/HomeSections";
 
 export const revalidate = 60;
 
@@ -42,13 +42,6 @@ export default async function Home() {
       />
       <Mayoreo waNumber={settings.whatsapp_number} waMessage={settings.whatsapp_message} />
       <Ritual />
-      <Faq />
-      <Contacto
-        brand={settings.brand_name}
-        waNumber={settings.whatsapp_number}
-        waMessage={settings.whatsapp_message}
-        footerText={settings.footer_text}
-      />
       <Footer
         brand={settings.brand_name}
         waNumber={settings.whatsapp_number}

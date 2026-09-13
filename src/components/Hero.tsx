@@ -8,14 +8,27 @@ type Props = {
 };
 
 /**
- * Hero minimalista de marca: mensaje claro, dos botones y la foto
- * del kit como protagonista. Nada flota fuera de su caja en móvil.
+ * Hero de marca con presencia: título grande en degradado rosa,
+ * destellos suaves y la foto del kit como protagonista.
+ * Nada flota fuera de su caja en móvil.
  */
 export default function Hero({ brand, waNumber, waMessage }: Props) {
+  const [name, tail] = splitBrand(brand);
+
   return (
     <section id="inicio" className="relative overflow-hidden pb-12 pt-24 md:pt-32">
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className="blob absolute -top-28 left-1/2 h-[420px] w-[720px] -translate-x-1/2 rounded-full bg-gradient-to-b from-blush-200/80 via-brand-100/50 to-transparent blur-2xl" />
+        <span className="float-soft absolute left-[8%] top-32 text-2xl opacity-70">✨</span>
+        <span className="float-soft absolute right-[10%] top-44 text-xl opacity-60" style={{ animationDelay: "-2s" }}>
+          💗
+        </span>
+        <span className="float-soft absolute left-[14%] top-[430px] hidden text-lg opacity-50 sm:block" style={{ animationDelay: "-4s" }}>
+          ✦
+        </span>
+        <span className="float-soft absolute right-[13%] top-[400px] hidden text-lg opacity-50 sm:block" style={{ animationDelay: "-1s" }}>
+          ✦
+        </span>
       </div>
 
       <div className="relative mx-auto max-w-3xl px-5 text-center">
@@ -23,25 +36,39 @@ export default function Hero({ brand, waNumber, waMessage }: Props) {
           <span className="h-1.5 w-1.5 rounded-full bg-brand-500" />
           Cosmética artesanal · Ingredientes naturales
         </p>
-        <h1 className="hero-enter hero-enter-1 mt-5 font-serif text-[44px] font-bold leading-[1.05] text-cocoa-900 sm:text-6xl">
-          {brand} <span className="text-brand-500">💗</span>
+
+        <h1 className="hero-enter hero-enter-1 mt-6">
+          <span className="block bg-gradient-to-b from-brand-700 via-brand-500 to-brand-300 bg-clip-text font-serif text-[52px] font-black leading-[0.98] tracking-tight text-transparent sm:text-7xl lg:text-[86px]">
+            {name}
+          </span>
+          {tail && (
+            <span className="mt-3 flex items-center justify-center gap-4">
+              <span aria-hidden className="h-px w-14 bg-gradient-to-r from-transparent to-brand-400 sm:w-24" />
+              <span className="font-serif text-4xl font-bold italic text-brand-600 sm:text-5xl">
+                {tail} <span className="not-italic">✨</span>
+              </span>
+              <span aria-hidden className="h-px w-14 bg-gradient-to-l from-transparent to-brand-400 sm:w-24" />
+            </span>
+          )}
         </h1>
-        <p className="hero-enter hero-enter-2 mx-auto mt-4 max-w-xl text-[17px] leading-relaxed text-cocoa-800/75">
-          Tu rutina facial completa: limpia, trata, nutre y protege tu piel
-          con fórmulas artesanales.
+
+        <p className="hero-enter hero-enter-2 mx-auto mt-5 max-w-xl text-[17px] leading-relaxed text-cocoa-800/75">
+          Piel suave, hidratada y luminosa: tu rutina facial completa
+          en fórmulas artesanales 💗
         </p>
+
         <div className="hero-enter hero-enter-3 mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
-          <a href="#productos" className="btn-ghost w-full sm:w-auto">
-            Ver productos
-          </a>
           <a
             href={buildWaLink(waNumber, waMessage)}
             target="_blank"
             rel="noopener"
-            className="btn-primary w-full sm:w-auto"
+            className="btn-primary beat w-full sm:w-auto"
           >
             <WaIcon />
             Pedir por WhatsApp
+          </a>
+          <a href="#productos" className="btn-ghost w-full sm:w-auto">
+            Ver productos
           </a>
         </div>
       </div>
@@ -67,6 +94,13 @@ export default function Hero({ brand, waNumber, waMessage }: Props) {
       </div>
     </section>
   );
+}
+
+/** "Cutis Radiante 7D" -> ["Cutis Radiante", "7D"] */
+function splitBrand(brand: string): [string, string] {
+  const m = brand.match(/^(.*)(7D.*)$/i);
+  if (m) return [m[1].trim(), m[2].trim()];
+  return [brand, ""];
 }
 
 function WaIcon() {
