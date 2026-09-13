@@ -4,25 +4,44 @@ import { useEffect, useState } from "react";
 import { buildWaLink } from "@/lib/whatsapp";
 import { formatPrice } from "./HomeSections";
 
+export type BuyItem = { slug: string; name: string; price: number | null; href: string };
+
 type Props = {
   waNumber: string;
   waMessage: string;
+  brand: string;
   fromPrice: number | null;
+  items: BuyItem[];
 };
 
 /**
- * Barra de compra siempre visible en celular (glass estilo iOS).
+ * Barra de compra en celular (glass estilo iOS).
+ * Cambia según el producto visible en pantalla.
  * Solo móvil: en PC el botón flotante cumple esa función.
  */
-export default function StickyBuyBar({ waNumber, waMessage, fromPrice }: Props) {
+export default function StickyBuyBar({ waNumber, waMessage, brand, fromPrice, items }: Props) {
   const [show, setShow] = useState(false);
+  const [active, setActive] = useState<BuyItem | null>(null);
+  const general = buildWaLink(waNumber, waMessage);
 
   useEffect(() => {
-    const onScroll = () => setShow(window.scrollY > window.innerHeight * 0.55);
+    const onScroll = () => {
+      setShow(window.scrollY > window.innerHeight * 0.55);
+      const els = document.querySelectorAll<HTMLElement>("[data-buy]");
+      let current: BuyItem | null = null;
+      const mid = window.scrollY + window.innerHeight * 0.45;
+      els.forEach((el) => {
+        if (el.offsetTop <= mid) {
+          const found = items.find((i) => i.slug === el.dataset.buy);
+          if (found) current = found;
+        }
+      });
+      setActive(current);
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [items]);
 
   return (
     <div
@@ -34,18 +53,26 @@ export default function StickyBuyBar({ waNumber, waMessage, fromPrice }: Props) 
     >
       <div className="glass flex items-center gap-3 rounded-full py-2.5 pl-5 pr-2.5 shadow-float">
         <div className="min-w-0 flex-1 leading-tight">
-          <p className="truncate text-[13px] font-bold text-cocoa-900">Cutis Radiante 7D 💗</p>
+          <p className="truncate text-[13px] font-bold text-cocoa-900">
+            {active ? `💗 ${active.name}` : `${brand} 💗`}
+          </p>
           <p className="text-xs text-cocoa-800/60">
-            {fromPrice != null ? `Desde ${formatPrice(fromPrice)} pesos` : "Pide el tuyo"}
+            {active
+              ? active.price != null
+                ? `${formatPrice(active.price)} pesos`
+                : "Pide el tuyo"
+              : fromPrice != null
+                ? `Desde ${formatPrice(fromPrice)} pesos`
+                : "Pide el tuyo"}
           </p>
         </div>
         <a
-          href={buildWaLink(waNumber, waMessage)}
+          href={active ? active.href : general}
           target="_blank"
           rel="noopener"
           className="beat shrink-0 rounded-full bg-[#25D366] px-5 py-3 text-[14px] font-bold text-white shadow-card transition active:scale-95"
         >
-          Pedir por WhatsApp
+          {active ? "Pedir" : "Pedir por WhatsApp"}
         </a>
       </div>
     </div>

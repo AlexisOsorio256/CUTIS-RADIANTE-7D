@@ -66,7 +66,6 @@ export function Catalogo({
         <h2 className="mt-4 font-serif text-3xl font-bold text-cocoa-900 md:text-[40px]">
           Elige tu favorito 💗
         </h2>
-        <p className="mt-3 text-[15px] text-cocoa-800/65">Precios en pesos</p>
       </Reveal>
 
       <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -76,7 +75,7 @@ export function Catalogo({
           )?.value;
           return (
             <Reveal key={p.slug} delay={(i % 3) * 80}>
-              <article className="card flex h-full flex-col overflow-hidden transition-transform duration-300 hover:-translate-y-1">
+              <article data-buy={p.slug} className="card flex h-full flex-col overflow-hidden transition-transform duration-300 hover:-translate-y-1">
                 {p.main_image && (
                   <div className="photo-frame m-3 mb-0 aspect-[4/3] !rounded-3xl">
                     <Image
@@ -142,17 +141,14 @@ export function Catalogo({
         {/* Kit dentro de los productos: tarjeta panorámica sin foto repetida */}
         {kits.map((p) => (
           <Reveal key={p.slug} className="sm:col-span-2 lg:col-span-3">
-          <article className="relative overflow-hidden rounded-[2rem] border border-white/60 bg-gradient-to-br from-brand-500 via-brand-600 to-cocoa-900 p-7 text-white shadow-float md:p-10">
+          <article data-buy={p.slug} className="relative overflow-hidden rounded-[2rem] border border-white/60 bg-gradient-to-br from-brand-500 via-brand-600 to-cocoa-900 p-7 text-white shadow-float md:p-10">
             <div aria-hidden className="pointer-events-none absolute inset-0 opacity-25">
               <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/30 blur-3xl" />
               <div className="absolute -bottom-20 -left-10 h-64 w-64 rounded-full bg-white/20 blur-3xl" />
             </div>
             <div className="relative grid gap-7 md:grid-cols-[1.2fr_0.8fr] md:items-center">
               <div>
-                <p className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.18em] backdrop-blur">
-                  ✨ Lo más completo
-                </p>
-                <h3 className="mt-3 font-serif text-3xl font-bold md:text-4xl">{p.name}</h3>
+                <h3 className="font-serif text-3xl font-bold md:text-4xl">{p.name}</h3>
                 <p className="mt-1 text-sm font-semibold uppercase tracking-[0.2em] text-white/70">
                   {p.subtitle}
                 </p>
@@ -199,7 +195,7 @@ export function Catalogo({
   );
 }
 
-/* ---------- Mayoreo ---------- */
+/* ---------- Mayoreo (cinta compacta) ---------- */
 export function Mayoreo({ waNumber }: { waNumber: string; waMessage: string }) {
   const clean = waNumber.replace(/\D/g, "");
   const href = `https://wa.me/${clean}?text=${encodeURIComponent(
@@ -208,18 +204,18 @@ export function Mayoreo({ waNumber }: { waNumber: string; waMessage: string }) {
   return (
     <section id="mayoreo" className="mx-auto max-w-6xl px-5 pb-12 md:pb-16 lg:px-8">
       <Reveal>
-        <div className="card flex flex-col items-center gap-4 p-7 text-center md:flex-row md:justify-between md:p-9 md:text-left">
-          <div>
-            <p className="eyebrow">Ventas por mayoreo 💗</p>
-            <h2 className="mt-3 font-serif text-2xl font-bold text-cocoa-900 md:text-3xl">
-              A partir de 10 piezas del mismo producto
-            </h2>
-            <p className="mt-2 text-[15px] text-cocoa-800/70">
-              Precios de mayoreo por mensaje!!
-            </p>
-          </div>
-          <a href={href} target="_blank" rel="noopener" className="btn-primary w-full shrink-0 md:w-auto">
-            Pedir precios por WhatsApp
+        <div className="relative flex flex-col items-center gap-3 overflow-hidden rounded-[1.75rem] border border-white/20 bg-cocoa-900 px-6 py-4 text-center text-white shadow-card sm:flex-row sm:justify-between sm:gap-4 sm:rounded-full sm:px-7 sm:text-left">
+          <p className="text-[14px] font-semibold leading-snug sm:text-[15px]">
+            💗 <span className="font-bold uppercase tracking-[0.14em]">Mayoreo:</span>{" "}
+            <span className="text-white/80">desde 10 piezas del mismo producto</span>
+          </p>
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener"
+            className="shrink-0 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-brand-600 shadow transition hover:-translate-y-0.5 active:scale-95"
+          >
+            Precios por WhatsApp
           </a>
         </div>
       </Reveal>
