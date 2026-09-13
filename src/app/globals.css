@@ -1,0 +1,172 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --blush-bg: #fdf6f7;
+  --ink: #4a2436;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #fffbf7;
+  color: #3a1c2b;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: #f6c6d5;
+  color: #4a2436;
+}
+
+/* ---- animación de aparición al hacer scroll ---- */
+.reveal {
+  opacity: 0;
+  transform: translateY(26px);
+  transition:
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001s !important;
+    transition-duration: 0.001s !important;
+  }
+}
+
+/* ---- hero: entrada refinada + flotación delicada ---- */
+@keyframes heroIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes floatSoft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+@keyframes blobDrift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(18px, -14px) scale(1.04);
+  }
+}
+.hero-enter {
+  animation: heroIn 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.hero-enter-1 {
+  animation-delay: 0.08s;
+}
+.hero-enter-2 {
+  animation-delay: 0.18s;
+}
+.hero-enter-3 {
+  animation-delay: 0.3s;
+}
+.float-soft {
+  animation: floatSoft 6s ease-in-out infinite;
+}
+.blob {
+  animation: blobDrift 11s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-enter,
+  .float-soft,
+  .blob {
+    animation: none;
+  }
+}
+
+/* ---- botones ---- */
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand-500 px-7 py-4 text-base font-semibold text-white shadow-float transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-soft focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 active:translate-y-0;
+}
+.btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 rounded-full border border-brand-200 bg-white/70 px-6 py-3.5 text-base font-semibold text-cocoa-800 backdrop-blur transition-all duration-300 hover:border-brand-300 hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100;
+}
+
+/* ---- tarjetas ---- */
+.card {
+  @apply rounded-4xl border border-blush-200/70 bg-white shadow-card;
+}
+.eyebrow {
+  @apply inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-brand-600;
+}
+
+/* ---- imágenes con marco editorial ---- */
+.photo-frame {
+  position: relative;
+  border-radius: 2rem;
+  overflow: hidden;
+  background: linear-gradient(135deg, #fbe4eb 0%, #fdf6f7 55%, #f5e6da 100%);
+  box-shadow: 0 20px 60px -18px rgba(214, 51, 108, 0.3);
+}
+.photo-frame img {
+  transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.photo-frame:hover img {
+  transform: scale(1.03);
+}
+
+/* ---- acordeón FAQ ---- */
+.faq-answer {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.faq-open .faq-answer {
+  grid-template-rows: 1fr;
+}
+.faq-answer > div {
+  overflow: hidden;
+}
+.faq-chevron {
+  transition: transform 0.35s ease;
+}
+.faq-open .faq-chevron {
+  transform: rotate(180deg);
+}
+
+/* ---- inputs admin ---- */
+.field {
+  @apply w-full rounded-2xl border border-blush-200 bg-white px-4 py-3 text-[15px] text-cocoa-900 placeholder:text-cocoa-800/35 shadow-sm transition focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100;
+}
+.label {
+  @apply mb-1.5 block text-sm font-semibold text-cocoa-800;
+}
+.hint {
+  @apply mt-1 text-xs leading-relaxed text-cocoa-800/55;
+}
