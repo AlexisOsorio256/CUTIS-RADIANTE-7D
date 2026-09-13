@@ -12,6 +12,20 @@ export function formatPrice(v: number | null): string {
   return "$" + v.toLocaleString("es-MX");
 }
 
+/**
+ * Proporción real de cada foto (medidas del archivo) para mostrarlas
+ * llenas y completas con object-cover. Las fotos nuevas que suba la
+ * administradora usan contain para verse completas siempre.
+ */
+const FRAMES: Record<string, string> = {
+  "bloqueador-fps75": "aspect-[2/3]",
+  "crema-ultra-master": "aspect-[3/2]",
+  "kit-completo": "aspect-[4/5]",
+  jabon: "aspect-square",
+  "exfoliante-arroz": "aspect-square",
+  "crema-reparadora": "aspect-square",
+};
+
 /* ---------- Cinta marquesina ---------- */
 export function Marquee() {
   const items = ["100% artesanal", "Ingredientes naturales", "Cutis Radiante 7D", "Piel luminosa"];
@@ -106,7 +120,7 @@ export function Catalogo({
           id="pista-productos"
           ref={trackRef}
           onScroll={updateIndex}
-          className="no-scrollbar -mx-5 mt-9 flex snap-x snap-proximity gap-5 overflow-x-auto overscroll-x-contain px-5 pb-4 lg:mx-0 lg:px-1"
+          className="no-scrollbar -mx-5 mt-9 flex snap-x snap-proximity items-start gap-5 overflow-x-auto overscroll-x-contain px-5 pb-4 [mask-image:linear-gradient(to_right,#000_88%,transparent_100%)] lg:mx-0 lg:px-1"
         >
           {products.map((p, i) => {
             const grams = p.details.find(
@@ -118,15 +132,17 @@ export function Catalogo({
                 delay={Math.min(i, 2) * 80}
                 className="w-[80vw] max-w-[340px] shrink-0 snap-center sm:w-[340px]"
               >
-                <article data-buy={p.slug} className="card flex h-full flex-col overflow-hidden">
+                <article data-buy={p.slug} className="card flex h-auto flex-col overflow-hidden">
                   {p.main_image && (
-                    <div className="photo-frame m-2 mb-0 aspect-square select-none !rounded-3xl bg-blush-50 ring-1 ring-white/70">
+                    <div
+                      className={`photo-frame m-2 mb-0 select-none !rounded-3xl bg-blush-50 ring-1 ring-white/70 ${FRAMES[p.slug] ?? "aspect-square"}`}
+                    >
                       <Image
                         src={p.main_image}
                         alt={p.name}
                         fill
                         sizes="340px"
-                        className="pointer-events-none object-contain"
+                        className={`pointer-events-none ${FRAMES[p.slug] ? "object-cover" : "object-contain"}`}
                         loading="lazy"
                         draggable={false}
                       />
@@ -180,7 +196,7 @@ export function Catalogo({
                       </ul>
                     )}
 
-                    <div className="mt-3 flex items-end justify-between gap-3 border-t border-blush-100 pt-3">
+                    <div className="mt-3 border-t border-blush-100 pt-3 text-center">
                       <div>
                         {p.price != null && (
                           <p className="font-serif text-[26px] font-bold leading-none text-cocoa-900">

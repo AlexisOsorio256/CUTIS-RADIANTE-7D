@@ -157,12 +157,18 @@ body {
   @apply inline-flex items-center justify-center gap-2 rounded-full border border-brand-200 bg-white/70 px-6 py-3.5 text-base font-semibold text-cocoa-800 backdrop-blur transition-all duration-300 hover:border-brand-300 hover:bg-white focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100;
 }
 
-/* ---- tarjetas (glass) ---- */
+/* ---- tarjetas: sólidas en táctil (el blur de fondo trababa el scroll),
+   glass solo con mouse real ---- */
 .card {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(18px) saturate(1.5);
-  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  background: rgba(255, 255, 255, 0.94);
   @apply rounded-4xl border border-white/60 shadow-card;
+}
+@media (hover: hover) and (pointer: fine) {
+  .card {
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(18px) saturate(1.5);
+    -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  }
 }
 .eyebrow {
   @apply inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-brand-600;
