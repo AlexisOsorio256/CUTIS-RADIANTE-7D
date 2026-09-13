@@ -2,25 +2,13 @@
 
 import Image from "next/image";
 import type { Product } from "@/lib/types";
-import { buildWaLink } from "@/lib/whatsapp";
+import { productLink } from "@/lib/whatsapp";
 import Reveal from "./Reveal";
 import LikeButton from "./LikeButton";
 
 export function formatPrice(v: number | null): string {
   if (v == null) return "";
   return "$" + v.toLocaleString("es-MX");
-}
-
-function productLabel(p: Product): string {
-  return p.price != null ? `${p.name} (${formatPrice(p.price)})` : p.name;
-}
-
-export function productLink(p: Product, waNumber: string, waMessage: string): string {
-  if (p.wa_message.trim()) {
-    const clean = waNumber.replace(/\D/g, "");
-    return `https://wa.me/${clean}?text=${encodeURIComponent(p.wa_message.trim())}`;
-  }
-  return buildWaLink(waNumber, waMessage, productLabel(p));
 }
 
 /* ---------- Cinta marquesina ---------- */

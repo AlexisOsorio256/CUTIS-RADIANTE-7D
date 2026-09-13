@@ -7,7 +7,8 @@ import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
 import StickyBuyBar from "@/components/StickyBuyBar";
-import { Catalogo, Mayoreo, Ritual, Marquee, productLink } from "@/components/HomeSections";
+import { Catalogo, Mayoreo, Ritual, Marquee } from "@/components/HomeSections";
+import { productLink } from "@/lib/whatsapp";
 
 export const revalidate = 60;
 
