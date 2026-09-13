@@ -53,85 +53,114 @@ export function Catalogo({
         </h2>
       </Reveal>
 
-      <div className="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {products.map((p, i) => {
-          const grams = p.details.find(
-            (d) => d.label.toLowerCase().includes("contenido") || d.label.toLowerCase().includes("presentación")
-          )?.value;
-          return (
-            <Reveal key={p.slug} delay={(i % 3) * 80}>
-              <article data-buy={p.slug} className="card flex h-full flex-col overflow-hidden transition-transform duration-300 hover:-translate-y-1">
-                {p.main_image && (
-                  <div className="photo-frame m-3 mb-0 aspect-[4/3] !rounded-3xl">
-                    <Image
-                      src={p.main_image}
-                      alt={p.name}
-                      fill
-                      sizes="(max-width:768px) 92vw, 360px"
-                      className="object-cover"
-                      loading="lazy"
-                    />
-                    {grams && (
-                      <span className="glass absolute bottom-3 left-3 rounded-full px-3 py-1 text-xs font-bold text-cocoa-900">
-                        {grams}
+      <div className="relative">
+        <div
+          id="pista-productos"
+          className="no-scrollbar -mx-5 mt-9 flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 pb-4 lg:mx-0 lg:px-1"
+        >
+          {products.map((p, i) => {
+            const grams = p.details.find(
+              (d) => d.label.toLowerCase().includes("contenido") || d.label.toLowerCase().includes("presentación")
+            )?.value;
+            return (
+              <Reveal
+                key={p.slug}
+                delay={Math.min(i, 2) * 80}
+                className="w-[80vw] max-w-[340px] shrink-0 snap-center sm:w-[340px]"
+              >
+                <article data-buy={p.slug} className="card flex h-full flex-col overflow-hidden">
+                  {p.main_image && (
+                    <div className="photo-frame m-3 mb-0 aspect-square !rounded-3xl bg-blush-50">
+                      <Image
+                        src={p.main_image}
+                        alt={p.name}
+                        fill
+                        sizes="340px"
+                        className="object-contain"
+                        loading="lazy"
+                      />
+                      {grams && (
+                        <span className="glass absolute bottom-3 left-3 rounded-full px-3 py-1 text-xs font-bold text-cocoa-900">
+                          {grams}
+                        </span>
+                      )}
+                      <span className="absolute right-3 top-3">
+                        <LikeButton slug={p.slug} count={likes[p.slug] ?? 0} />
                       </span>
-                    )}
-                    <span className="absolute right-3 top-3">
-                      <LikeButton slug={p.slug} count={likes[p.slug] ?? 0} />
-                    </span>
-                  </div>
-                )}
-
-                <div className="flex flex-1 flex-col p-6">
-                  <p className="text-[11.5px] font-bold uppercase tracking-[0.2em] text-brand-500">
-                    {p.subtitle}
-                  </p>
-                  <h3 className="mt-1.5 font-serif text-[22px] font-bold leading-snug text-cocoa-900">
-                    {p.name}
-                  </h3>
-                  <p className="mt-2 text-[14.5px] leading-relaxed text-cocoa-800/75">
-                    {p.description}
-                  </p>
-
-                  {p.includes.length > 0 && (
-                    <ul className="mt-3 space-y-1.5 rounded-2xl bg-brand-50/70 p-4">
-                      {p.includes.map((inc) => (
-                        <li key={inc} className="text-[13.5px] font-medium text-cocoa-900/85">
-                          {inc}
-                        </li>
-                      ))}
-                    </ul>
+                    </div>
                   )}
 
-                  <div className="mt-4 flex items-end justify-between gap-3 border-t border-blush-100 pt-4">
-                    <div>
-                      {p.price != null && (
-                        <p className="font-serif text-[26px] font-bold leading-none text-cocoa-900">
-                          {formatPrice(p.price)}{" "}
-                          <span className="font-sans text-[15px] font-semibold text-cocoa-800/60">
-                            pesos
-                          </span>
-                        </p>
-                      )}
-                      <p className="mt-1 text-xs text-cocoa-800/55">
-                        📦 El envío se paga por separado
-                      </p>
-                    </div>
-                  </div>
+                  <div className="flex flex-1 flex-col p-6">
+                    <p className="text-[11.5px] font-bold uppercase tracking-[0.2em] text-brand-500">
+                      {p.subtitle}
+                    </p>
+                    <h3 className="mt-1.5 font-serif text-[22px] font-bold leading-snug text-cocoa-900">
+                      {p.name}
+                    </h3>
+                    <p className="mt-2 text-[14.5px] leading-relaxed text-cocoa-800/75">
+                      {p.description}
+                    </p>
 
-                  <a
-                    href={productLink(p, waNumber, waMessage)}
-                    target="_blank"
-                    rel="noopener"
-                    className="btn-primary mt-4 w-full !px-5 !py-3.5 !text-[15px]"
-                  >
-                    {p.cta_label || "Mándame mensaje"}
-                  </a>
-                </div>
-              </article>
-            </Reveal>
-          );
-        })}
+                    {p.includes.length > 0 && (
+                      <ul className="mt-3 space-y-1.5 rounded-2xl bg-brand-50/70 p-4">
+                        {p.includes.map((inc) => (
+                          <li key={inc} className="text-[13.5px] font-medium text-cocoa-900/85">
+                            {inc}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    <div className="mb-4 mt-4 flex items-end justify-between gap-3 border-t border-blush-100 pt-4">
+                      <div>
+                        {p.price != null && (
+                          <p className="font-serif text-[26px] font-bold leading-none text-cocoa-900">
+                            {formatPrice(p.price)}{" "}
+                            <span className="font-sans text-[15px] font-semibold text-cocoa-800/60">
+                              pesos
+                            </span>
+                          </p>
+                        )}
+                        <p className="mt-1 text-xs text-cocoa-800/55">
+                          📦 El envío se paga por separado
+                        </p>
+                      </div>
+                    </div>
+
+                    <a
+                      href={productLink(p, waNumber, waMessage)}
+                      target="_blank"
+                      rel="noopener"
+                      className="btn-primary mt-auto w-full !px-5 !py-3.5 !text-[15px]"
+                    >
+                      {p.cta_label || "Mándame mensaje"}
+                    </a>
+                  </div>
+                </article>
+              </Reveal>
+            );
+          })}
+        </div>
+
+        <div className="mt-1 hidden items-center justify-between md:flex">
+          <p className="text-sm text-cocoa-800/55">Desliza para ver todos 💗</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => document.getElementById("pista-productos")?.scrollBy({ left: -360, behavior: "smooth" })}
+              aria-label="Productos anteriores"
+              className="glass grid h-11 w-11 place-items-center rounded-full text-xl text-cocoa-900 shadow-card transition hover:text-brand-600 active:scale-90"
+            >
+              ←
+            </button>
+            <button
+              onClick={() => document.getElementById("pista-productos")?.scrollBy({ left: 360, behavior: "smooth" })}
+              aria-label="Más productos"
+              className="glass grid h-11 w-11 place-items-center rounded-full text-xl text-cocoa-900 shadow-card transition hover:text-brand-600 active:scale-90"
+            >
+              →
+            </button>
+          </div>
+        </div>
       </div>
     </section>
   );

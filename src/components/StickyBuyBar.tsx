@@ -27,16 +27,25 @@ export default function StickyBuyBar({ waNumber, waMessage, brand, fromPrice, it
   useEffect(() => {
     const onScroll = () => {
       setShow(window.scrollY > window.innerHeight * 0.55);
+      // Producto visible: el más cercano al centro de la pantalla
+      // (funciona con cuadrícula vertical o carrusel horizontal)
       const els = document.querySelectorAll<HTMLElement>("[data-buy]");
-      let current: BuyItem | null = null;
-      const mid = window.scrollY + window.innerHeight * 0.45;
+      const cx = window.innerWidth / 2;
+      const cy = window.scrollY + window.innerHeight * 0.45;
+      let best: BuyItem | null = null;
+      let bestDist = Infinity;
       els.forEach((el) => {
-        if (el.offsetTop <= mid) {
-          const found = items.find((i) => i.slug === el.dataset.buy);
-          if (found) current = found;
+        const r = el.getBoundingClientRect();
+        const top = r.top + window.scrollY;
+        if (top > cy || top + r.height < window.scrollY + 80) return;
+        const dist = Math.abs(r.left + r.width / 2 - cx);
+        const found = items.find((i) => i.slug === el.dataset.buy);
+        if (found && dist < bestDist) {
+          bestDist = dist;
+          best = found;
         }
       });
-      setActive(current);
+      setActive(best);
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });

@@ -212,6 +212,15 @@ body {
   }
 }
 
+/* ---- carrusel horizontal sin barra visible ---- */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* ---- acordeón FAQ ---- */
 .faq-answer {
   display: grid;
