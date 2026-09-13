@@ -173,14 +173,18 @@ body {
   position: relative;
   border-radius: 2rem;
   overflow: hidden;
+  touch-action: pan-x pan-y;
   background: linear-gradient(135deg, #fbe4eb 0%, #fdf6f7 55%, #f5e6da 100%);
   box-shadow: 0 20px 60px -18px rgba(214, 51, 108, 0.3);
 }
 .photo-frame img {
   transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.photo-frame:hover img {
-  transform: scale(1.03);
+/* zoom solo con mouse real: en táctil causaba tirones */
+@media (hover: hover) {
+  .photo-frame:hover img {
+    transform: scale(1.03);
+  }
 }
 
 /* ---- glass estilo iOS ---- */

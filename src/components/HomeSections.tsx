@@ -106,7 +106,7 @@ export function Catalogo({
           id="pista-productos"
           ref={trackRef}
           onScroll={updateIndex}
-          className="no-scrollbar -mx-5 mt-9 flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 pb-4 [mask-image:linear-gradient(to_right,#000_88%,transparent_100%)] lg:mx-0 lg:px-1"
+          className="no-scrollbar -mx-5 mt-9 flex snap-x snap-proximity gap-5 overflow-x-auto overscroll-x-contain px-5 pb-4 lg:mx-0 lg:px-1"
         >
           {products.map((p, i) => {
             const grams = p.details.find(
@@ -180,7 +180,7 @@ export function Catalogo({
                       </ul>
                     )}
 
-                    <div className="mb-3 mt-3 flex items-end justify-between gap-3 border-t border-blush-100 pt-3">
+                    <div className="mt-3 flex items-end justify-between gap-3 border-t border-blush-100 pt-3">
                       <div>
                         {p.price != null && (
                           <p className="font-serif text-[26px] font-bold leading-none text-cocoa-900">
@@ -200,7 +200,7 @@ export function Catalogo({
                       href={productLink(p, waNumber, waMessage)}
                       target="_blank"
                       rel="noopener"
-                      className="btn-wa mt-auto w-full"
+                      className="btn-wa mt-3 w-full"
                     >
                       <WaBtnIcon />
                       {p.cta_label || "Mándame mensaje"}
