@@ -9,13 +9,26 @@
 
 html {
   scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
   background: #fffbf7;
   color: #3a1c2b;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   overflow-x: hidden;
+}
+
+/* Títulos con equilibrio visual y serif ligeramente más fina */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+.font-serif {
+  letter-spacing: -0.015em;
 }
 
 ::selection {
@@ -138,7 +151,7 @@ body {
 .btn-primary {
   position: relative;
   overflow: hidden;
-  @apply inline-flex items-center justify-center gap-2 rounded-full bg-brand-500 px-7 py-4 text-base font-semibold text-white shadow-float transition-all duration-300 hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-soft focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 active:translate-y-0 active:scale-[0.98];
+  @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-br from-brand-400 via-brand-500 to-brand-600 px-7 py-4 text-base font-semibold text-white shadow-float transition-all duration-300 hover:-translate-y-0.5 hover:from-brand-500 hover:to-brand-700 hover:shadow-soft focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-200 active:translate-y-0 active:scale-[0.98];
 }
 /* brillo que cruza el botón */
 .btn-primary::after {
@@ -168,10 +181,38 @@ body {
     background: rgba(255, 255, 255, 0.82);
     backdrop-filter: blur(18px) saturate(1.5);
     -webkit-backdrop-filter: blur(18px) saturate(1.5);
+    transition:
+      transform 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 24px 60px -18px rgba(214, 51, 108, 0.32);
   }
 }
 .eyebrow {
-  @apply inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-brand-600;
+  @apply inline-flex items-center gap-2 rounded-full border border-brand-200/70 bg-gradient-to-b from-white to-brand-50 px-4 py-1.5 text-xs font-bold uppercase tracking-[0.18em] text-brand-600 shadow-sm;
+}
+
+/* ---- subrayado animado para links del menú ---- */
+.nav-link {
+  position: relative;
+}
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -5px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e37497, #d6336c);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+.nav-link:hover::after {
+  transform: scaleX(1);
 }
 
 /* ---- imágenes con marco editorial ---- */
@@ -210,22 +251,11 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.6);
 }
 
-/* ---- marquesina ---- */
-@keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
+@media (prefers-reduced-motion: reduce) {
+  .beat {
+    animation: none;
   }
 }
-.marquee-track {
-  display: flex;
-  width: max-content;
-  animation: marquee 26s linear infinite;
-}
-
-/* ---- flotación suave ya definida arriba; latido para CTA ---- */
 @keyframes heartbeat {
   0%,
   100% {
@@ -239,7 +269,6 @@ body {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .marquee-track,
   .beat {
     animation: none;
   }

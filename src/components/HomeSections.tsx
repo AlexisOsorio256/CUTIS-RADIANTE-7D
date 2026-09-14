@@ -26,27 +26,6 @@ const FRAMES: Record<string, string> = {
   "crema-reparadora": "aspect-square",
 };
 
-/* ---------- Cinta marquesina ---------- */
-export function Marquee() {
-  const items = ["100% artesanal", "Ingredientes naturales", "Cutis Radiante 7D", "Piel luminosa"];
-  const row = [...items, ...items, ...items];
-  return (
-    <div aria-hidden className="overflow-hidden border-y border-white/50 bg-white/50 py-3 backdrop-blur-xl">
-      <div className="marquee-track gap-8">
-        {[0, 1].map((half) => (
-          <div key={half} className="flex shrink-0 items-center gap-8">
-            {row.map((t, i) => (
-              <span key={`${half}-${i}`} className="flex items-center gap-8 whitespace-nowrap text-[12.5px] font-bold uppercase tracking-[0.24em] text-brand-600/80">
-                {t} <span className="text-brand-300">💗</span>
-              </span>
-            ))}
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 /* ---------- Catálogo: todos los productos con el mismo diseño ---------- */
 export function Catalogo({
   products,
@@ -211,9 +190,9 @@ export function Catalogo({
                     <div className="mt-3 border-t border-blush-100 pt-3 text-center">
                       <div>
                         {p.price != null && (
-                          <p className="font-serif text-[26px] font-bold leading-none text-cocoa-900">
+                          <p className="font-serif text-[28px] font-bold leading-none tabular-nums text-cocoa-900">
                             {formatPrice(p.price)}{" "}
-                            <span className="font-sans text-[15px] font-semibold text-cocoa-800/60">
+                            <span className="font-sans text-[15px] font-semibold text-cocoa-800/55">
                               pesos
                             </span>
                           </p>
@@ -247,7 +226,7 @@ export function Catalogo({
                 <span
                   key={p.slug}
                   className={`h-1.5 rounded-full transition-all duration-300 ${
-                    d === index ? "w-5 bg-brand-500" : "w-1.5 bg-brand-200"
+                    d === index ? "w-5 bg-gradient-to-r from-brand-400 to-brand-600" : "w-1.5 bg-brand-200"
                   }`}
                 />
               ))}
@@ -295,8 +274,14 @@ export function Resenas({ reviews }: { reviews: Review[] }) {
   return (
     <section id="resenas" className="relative overflow-hidden py-12 md:py-16">
       <div className="relative mx-auto max-w-6xl px-5 lg:px-8">
-        <Reveal className="mx-auto max-w-2xl text-center">
-          <p className="eyebrow">Opiniones de clientas</p>
+        <Reveal className="relative mx-auto max-w-2xl text-center">
+          <span
+            aria-hidden
+            className="pointer-events-none absolute -top-10 left-1/2 -translate-x-1/2 select-none font-serif text-[110px] leading-none text-brand-100"
+          >
+            &ldquo;
+          </span>
+          <p className="eyebrow relative">Opiniones de clientas</p>
           <h2 className="mt-4 font-serif text-3xl font-bold leading-tight text-cocoa-900 md:text-[40px]">
             Reseñas de Cutis Radiante 7D
           </h2>
@@ -337,7 +322,7 @@ export function Resenas({ reviews }: { reviews: Review[] }) {
                     <span
                       key={rv.id}
                       className={`h-1.5 rounded-full transition-all duration-300 ${
-                        d === index ? "w-5 bg-brand-500" : "w-1.5 bg-brand-200"
+                        d === index ? "w-5 bg-gradient-to-r from-brand-400 to-brand-600" : "w-1.5 bg-brand-200"
                       }`}
                     />
                   ))}
@@ -454,8 +439,12 @@ export function Mayoreo({ waNumber }: { waNumber: string; waMessage: string }) {
   return (
     <section id="mayoreo" className="mx-auto max-w-6xl px-5 pb-12 md:pb-16 lg:px-8">
       <Reveal>
-        <div className="relative flex flex-col items-center gap-3 overflow-hidden rounded-[1.75rem] border border-white/20 bg-cocoa-900 px-6 py-4 text-center text-white shadow-card sm:flex-row sm:justify-between sm:gap-4 sm:rounded-full sm:px-7 sm:text-left">
-          <p className="text-[14px] font-semibold leading-snug sm:text-[15px]">
+        <div className="relative flex flex-col items-center gap-3 overflow-hidden rounded-[1.75rem] border border-white/20 bg-gradient-to-br from-cocoa-900 via-[#57263B] to-brand-700 px-6 py-4 text-center text-white shadow-float sm:flex-row sm:justify-between sm:gap-4 sm:rounded-full sm:px-7 sm:text-left">
+          <div aria-hidden className="pointer-events-none absolute inset-0">
+            <div className="absolute -left-12 -top-16 h-44 w-44 rounded-full bg-brand-400/25 blur-3xl" />
+            <div className="absolute -bottom-20 right-8 h-44 w-44 rounded-full bg-blush-300/20 blur-3xl" />
+          </div>
+          <p className="relative text-[14px] font-semibold leading-snug sm:text-[15px]">
             💗 <span className="font-bold uppercase tracking-[0.14em]">Mayoreo:</span>{" "}
             <span className="text-white/80">desde 10 piezas del mismo producto</span>
           </p>
@@ -463,7 +452,7 @@ export function Mayoreo({ waNumber }: { waNumber: string; waMessage: string }) {
             href={href}
             target="_blank"
             rel="noopener"
-            className="shrink-0 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-brand-600 shadow transition hover:-translate-y-0.5 active:scale-95"
+            className="relative shrink-0 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-brand-600 shadow transition hover:-translate-y-0.5 hover:shadow-soft hover:brightness-[1.03] active:scale-95"
           >
             Precios por WhatsApp
           </a>
@@ -498,7 +487,7 @@ export function Ritual() {
                 key={s.n}
                 className="card flex w-[172px] shrink-0 snap-center items-center gap-3 p-4 text-left lg:w-auto"
               >
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-brand-500 font-serif text-base font-bold text-white shadow-card">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-400 to-brand-600 font-serif text-base font-bold text-white shadow-card ring-2 ring-white">
                   {s.n}
                 </span>
                 <div className="min-w-0">

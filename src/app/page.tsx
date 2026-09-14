@@ -7,7 +7,7 @@ import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
 import StickyBuyBar from "@/components/StickyBuyBar";
-import { Catalogo, Mayoreo, Resenas, Ritual, Marquee } from "@/components/HomeSections";
+import { Catalogo, Mayoreo, Resenas, Ritual } from "@/components/HomeSections";
 import { productLink } from "@/lib/whatsapp";
 
 export const revalidate = 60;
@@ -93,7 +93,6 @@ export default async function Home() {
         waNumber={settings.whatsapp_number}
         waMessage={settings.whatsapp_message}
       />
-      <Marquee />
       <Catalogo
         products={products}
         waNumber={settings.whatsapp_number}
@@ -103,7 +102,7 @@ export default async function Home() {
       <Resenas reviews={reviews} />
       <Mayoreo waNumber={settings.whatsapp_number} waMessage={settings.whatsapp_message} />
       <Ritual />
-      <Footer brand={settings.brand_name} />
+      <Footer brand={settings.brand_name} text={settings.footer_text} instagram={settings.instagram} />
       {/* espacio para que la barra fija móvil no tape el final */}
       <div aria-hidden className="h-[76px] bg-white/60 md:hidden" />
       <StickyBuyBar

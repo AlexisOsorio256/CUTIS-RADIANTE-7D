@@ -51,7 +51,7 @@ export default function Navbar({ brand, waNumber, waMessage }: Props) {
             <a
               key={l.href}
               href={l.href}
-              className="text-[14.5px] font-medium text-cocoa-800/80 transition hover:text-brand-600"
+              className="nav-link text-[14.5px] font-medium text-cocoa-800/80 transition hover:text-brand-600"
             >
               {l.label}
             </a>
@@ -66,7 +66,7 @@ export default function Navbar({ brand, waNumber, waMessage }: Props) {
             href={buildWaLink(waNumber, waMessage)}
             target="_blank"
             rel="noopener"
-            className="rounded-full bg-cocoa-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-600"
+            className="rounded-full bg-gradient-to-br from-cocoa-900 to-[#57263B] px-5 py-2.5 text-sm font-semibold text-white shadow-card transition hover:-translate-y-0.5 hover:from-brand-600 hover:to-brand-700 active:scale-95"
           >
             Pedir por WhatsApp
           </a>

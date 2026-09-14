@@ -51,32 +51,51 @@ export default function Hero({ brand, waNumber, waMessage }: Props) {
           )}
         </h1>
 
-        <div className="hero-enter hero-enter-2 mx-auto mt-6 max-w-xl rounded-[1.75rem] border border-white/60 bg-white/85 p-6 text-left shadow-card backdrop-blur md:p-7">
-          <h2 className="text-center font-serif text-[22px] font-bold leading-snug text-cocoa-900 md:text-2xl">
-            ✨ Crema Cutis Radiante 7D — Reparadora 💗
-          </h2>
-          <p className="mt-2 text-center text-[15px] font-semibold text-cocoa-900/85">
-            ✅ Para todo tipo de piel ✨
-          </p>
-          <p className="mt-4 text-[15px] leading-relaxed text-cocoa-800/85 md:text-base">
-            Es una crema nutritiva e hidratante 💛
-          </p>
-          <p className="mt-2.5 text-[15px] leading-relaxed text-cocoa-800/85 md:text-base">
-            Esa hidratación es la forma en que empieza a trabajar y reparar desde abajo,
-            nutriendo la piel por dentro para sanar, fortalecer y renovar ✨
-          </p>
-          <p className="mt-2.5 text-[15px] leading-relaxed text-cocoa-800/85 md:text-base">
-            🌸 Poco a poco va aclarando las manchitas y dejando tu piel más bonita,
-            pareja y radiante 💛
-          </p>
-          <p className="mt-4 text-[15px] font-bold text-cocoa-900">💡 Cómo usarla:</p>
-          <ul className="mt-2 space-y-1.5 text-[14.5px] leading-relaxed text-cocoa-800/85">
-            <li>– Empieza con poquita nomás ✨</li>
-            <li>– Tu piel te dice cuánto necesita: si con poquito te sientes bien, así se queda</li>
-            <li>– Si sientes que ocupas un poquito más, te pones un poquito más</li>
-            <li>– Cada piel es diferente, escucha la tuya 💗</li>
-            <li>– Rinde muchísimo y deja tu piel nutrida e hidratada ✨</li>
-          </ul>
+        <div className="hero-enter hero-enter-2 mx-auto mt-7 max-w-xl rounded-[1.9rem] bg-gradient-to-br from-brand-300 via-blush-200 to-brand-200 p-[1.5px] shadow-float">
+          <div className="rounded-[calc(1.9rem-1.5px)] bg-white/92 p-6 text-left shadow-inner backdrop-blur md:p-7">
+            <p className="text-center text-[11px] font-bold uppercase tracking-[0.24em] text-brand-500">
+              Nuestra favorita
+            </p>
+            <h2 className="mt-1.5 text-center font-serif text-[22px] font-bold leading-snug text-cocoa-900 md:text-2xl">
+              ✨ Crema Cutis Radiante 7D — Reparadora 💗
+            </h2>
+            <p className="mx-auto mt-2.5 w-fit rounded-full bg-brand-50 px-4 py-1 text-center text-[13.5px] font-bold text-cocoa-900/85">
+              ✅ Para todo tipo de piel ✨
+            </p>
+            <p className="mt-4 text-[15px] leading-relaxed text-cocoa-800/85 md:text-base">
+              Es una crema nutritiva e hidratante 💛
+            </p>
+            <p className="mt-2.5 border-l-2 border-brand-200 pl-3.5 text-[15px] leading-relaxed text-cocoa-800/85 md:text-base">
+              Esa hidratación es la forma en que empieza a trabajar y reparar desde abajo,
+              nutriendo la piel por dentro para sanar, fortalecer y renovar ✨
+            </p>
+            <p className="mt-2.5 text-[15px] leading-relaxed text-cocoa-800/85 md:text-base">
+              🌸 Poco a poco va aclarando las manchitas y dejando tu piel más bonita,
+              pareja y radiante 💛
+            </p>
+            <div className="mt-5 rounded-2xl bg-gradient-to-b from-brand-50/80 to-blush-50/60 p-4">
+              <p className="text-[14px] font-bold uppercase tracking-[0.12em] text-cocoa-900">
+                💡 Cómo usarla
+              </p>
+              <ul className="mt-2.5 space-y-2 text-[14.5px] leading-relaxed text-cocoa-800/85">
+                {[
+                  "Empieza con poquita nomás ✨",
+                  "Tu piel te dice cuánto necesita: si con poquito te sientes bien, así se queda",
+                  "Si sientes que ocupas un poquito más, te pones un poquito más",
+                  "Cada piel es diferente, escucha la tuya 💗",
+                  "Rinde muchísimo y deja tu piel nutrida e hidratada ✨",
+                ].map((tip) => (
+                  <li key={tip} className="flex gap-2.5">
+                    <span
+                      aria-hidden
+                      className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-gradient-to-br from-brand-400 to-brand-600"
+                    />
+                    <span>{tip}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
 
         <div className="hero-enter hero-enter-3 mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
@@ -93,10 +112,6 @@ export default function Hero({ brand, waNumber, waMessage }: Props) {
             Ver productos
           </a>
         </div>
-
-        <p className="hero-enter hero-enter-3 mt-5 text-sm text-cocoa-800/60">
-          100% artesanal · Precios en pesos · El envío se paga por separado
-        </p>
       </div>
     </section>
   );
