@@ -73,6 +73,10 @@ export default function AdminPage() {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewForm, setReviewForm] = useState(EMPTY_REVIEW);
   const [uploadingReview, setUploadingReview] = useState(false);
+  /* Vista previa inmediata: el archivo subido a GitHub tarda 1-2 min en
+     publicarse, así que mientras tanto mostramos el dataUrl local. */
+  const [productPreview, setProductPreview] = useState("");
+  const [reviewPreviewMap, setReviewPreviewMap] = useState<Record<string, string>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY);
@@ -145,6 +149,7 @@ export default function AdminPage() {
   function startNew() {
     setEditingId(null);
     setForm({ ...EMPTY });
+    setProductPreview("");
     setShowForm(true);
     setError("");
     setOk("");
@@ -161,6 +166,7 @@ export default function AdminPage() {
       contenido: firstDetail(p),
       includes: listToLines(p.includes),
     });
+    setProductPreview("");
     setShowForm(true);
     setError("");
     setOk("");
@@ -181,6 +187,8 @@ export default function AdminPage() {
     setError("");
     try {
       const dataUrl = await fileToDataUrl(file);
+      // Vista previa inmediata con la imagen local
+      setProductPreview(dataUrl);
       const r = await fetch("/api/admin/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -188,8 +196,11 @@ export default function AdminPage() {
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error ?? "No se pudo subir");
+      // Se guarda la ruta del servidor; la vista previa sigue siendo local
+      // hasta que Vercel la publique (1-2 min)
       setForm((f) => ({ ...f, main_image: d.path }));
     } catch (e) {
+      setProductPreview("");
       setError(e instanceof Error ? e.message : "No se pudo subir la foto");
     } finally {
       setUploading(false);
@@ -259,6 +270,7 @@ export default function AdminPage() {
     setShowForm(false);
     setEditingId(null);
     setForm(EMPTY);
+    setProductPreview("");
     setOk("Guardado 💗 La página se actualiza sola en 1-2 minutos.");
     loadAll();
   }
@@ -332,6 +344,8 @@ export default function AdminPage() {
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.error ?? "No se pudo subir");
+      // Vista previa inmediata: se guarda la ruta pero se muestra la imagen local
+      setReviewPreviewMap((m) => ({ ...m, [d.path]: dataUrl }));
       setReviewForm((f) => ({ ...f, photos: [...f.photos, d.path].slice(0, 6) }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "No se pudo subir la foto");
@@ -621,9 +635,9 @@ export default function AdminPage() {
             </div>
 
             <label className="label mt-4">Foto</label>
-            {form.main_image && (
+            {(productPreview || form.main_image) && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={form.main_image} alt="Vista previa" className="mb-2 h-28 w-28 rounded-2xl border border-blush-200 object-cover" />
+              <img src={productPreview || form.main_image} alt="Vista previa" className="mb-2 h-28 w-28 rounded-2xl border border-blush-200 object-cover" />
             )}
             <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white">
               {uploading ? "Subiendo…" : "📷 Cambiar foto"}
@@ -652,7 +666,7 @@ export default function AdminPage() {
               <button disabled={saving} className="btn-primary flex-1 !py-3.5">
                 {saving ? "Guardando…" : "Guardar 💗"}
               </button>
-              <button type="button" onClick={() => { setShowForm(false); setEditingId(null); setForm(EMPTY); }} className="btn-ghost">
+              <button type="button" onClick={() => { setShowForm(false); setEditingId(null); setForm(EMPTY); setProductPreview(""); }} className="btn-ghost">
                 Atrás
               </button>
             </div>
@@ -674,7 +688,7 @@ export default function AdminPage() {
               <div key={rv.id} className="flex items-center gap-3 rounded-3xl border border-blush-200 bg-white p-4 shadow-sm">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 {rv.photos[0] ? (
-                  <img src={rv.photos[0]} alt="" className="h-14 w-14 shrink-0 rounded-2xl object-cover" />
+                  <img src={reviewPreviewMap[rv.photos[0]] || rv.photos[0]} alt="" className="h-14 w-14 shrink-0 rounded-2xl object-cover" />
                 ) : (
                   <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-blush-100 text-sm font-bold text-cocoa-800/50">
                     {rv.photos.length}/6
@@ -733,10 +747,17 @@ export default function AdminPage() {
                 {reviewForm.photos.map((src, i) => (
                   <div key={`${src}-${i}`} className="relative">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={src} alt={`Evidencia ${i + 1}`} className="h-36 w-full rounded-2xl border border-blush-200 object-cover" />
+                    <img src={reviewPreviewMap[src] || src} alt={`Evidencia ${i + 1}`} className="h-36 w-full rounded-2xl border border-blush-200 object-cover" />
                     <button
                       type="button"
-                      onClick={() => setReviewForm((f) => ({ ...f, photos: f.photos.filter((_, j) => j !== i) }))}
+                      onClick={() => {
+                        setReviewForm((f) => ({ ...f, photos: f.photos.filter((_, j) => j !== i) }));
+                        setReviewPreviewMap((m) => {
+                          const next = { ...m };
+                          delete next[src];
+                          return next;
+                        });
+                      }}
                       className="absolute right-2 top-2 rounded-full bg-cocoa-900/80 px-2.5 py-1 text-xs font-bold text-white"
                       aria-label="Quitar foto"
                     >

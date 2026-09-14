@@ -51,10 +51,33 @@ export default function Hero({ brand, waNumber, waMessage }: Props) {
           )}
         </h1>
 
-        <p className="hero-enter hero-enter-2 mx-auto mt-5 max-w-xl text-[17px] leading-relaxed text-cocoa-800/75 md:text-lg">
-          Piel suave, hidratada y luminosa: tu rutina facial completa
-          en fórmulas artesanales 💗
-        </p>
+        <div className="hero-enter hero-enter-2 mx-auto mt-6 max-w-xl rounded-[1.75rem] border border-white/60 bg-white/85 p-6 text-left shadow-card backdrop-blur md:p-7">
+          <h2 className="text-center font-serif text-[22px] font-bold leading-snug text-cocoa-900 md:text-2xl">
+            ✨ Crema Cutis Radiante 7D — Reparadora 💗
+          </h2>
+          <p className="mt-2 text-center text-[15px] font-semibold text-cocoa-900/85">
+            ✅ Para todo tipo de piel ✨
+          </p>
+          <p className="mt-4 text-[15px] leading-relaxed text-cocoa-800/85 md:text-base">
+            Es una crema nutritiva e hidratante 💛
+          </p>
+          <p className="mt-2.5 text-[15px] leading-relaxed text-cocoa-800/85 md:text-base">
+            Esa hidratación es la forma en que empieza a trabajar y reparar desde abajo,
+            nutriendo la piel por dentro para sanar, fortalecer y renovar ✨
+          </p>
+          <p className="mt-2.5 text-[15px] leading-relaxed text-cocoa-800/85 md:text-base">
+            🌸 Poco a poco va aclarando las manchitas y dejando tu piel más bonita,
+            pareja y radiante 💛
+          </p>
+          <p className="mt-4 text-[15px] font-bold text-cocoa-900">💡 Cómo usarla:</p>
+          <ul className="mt-2 space-y-1.5 text-[14.5px] leading-relaxed text-cocoa-800/85">
+            <li>– Empieza con poquita nomás ✨</li>
+            <li>– Tu piel te dice cuánto necesita: si con poquito te sientes bien, así se queda</li>
+            <li>– Si sientes que ocupas un poquito más, te pones un poquito más</li>
+            <li>– Cada piel es diferente, escucha la tuya 💗</li>
+            <li>– Rinde muchísimo y deja tu piel nutrida e hidratada ✨</li>
+          </ul>
+        </div>
 
         <div className="hero-enter hero-enter-3 mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <a
