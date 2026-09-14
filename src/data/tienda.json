@@ -177,16 +177,5 @@
       "sort_order": 6
     }
   ],
-  "reviews": [
-    {
-      "id": "r1789416836668",
-      "product": "Crema Reparadora",
-      "description": "Sussy",
-      "photos": [
-        "/images/1789416833501-cgkg7.jpg"
-      ],
-      "visible": true,
-      "sort_order": 0
-    }
-  ]
+  "reviews": []
 }
