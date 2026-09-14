@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import type { Product } from "@/lib/types";
+import type { Product, Review } from "@/lib/types";
 import { productLink } from "@/lib/whatsapp";
 import Reveal from "./Reveal";
 import LikeButton from "./LikeButton";
@@ -61,6 +61,7 @@ export function Catalogo({
 }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const touched = useRef(false);
+  const raf = useRef(0);
   const [index, setIndex] = useState(0);
   const total = products.length;
 
@@ -70,10 +71,15 @@ export function Catalogo({
     return (first?.offsetWidth ?? 340) + 20;
   }
 
-  function updateIndex() {
-    const track = trackRef.current;
-    if (!track) return;
-    setIndex(Math.min(total - 1, Math.max(0, Math.round(track.scrollLeft / cardStep()))));
+  function handleScroll() {
+    if (raf.current) return;
+    raf.current = requestAnimationFrame(() => {
+      raf.current = 0;
+      const track = trackRef.current;
+      if (!track) return;
+      const next = Math.min(total - 1, Math.max(0, Math.round(track.scrollLeft / cardStep())));
+      setIndex((prev) => (prev === next ? prev : next));
+    });
   }
 
   function go(dir: 1 | -1) {
@@ -90,6 +96,7 @@ export function Catalogo({
     };
     const track = trackRef.current;
     track?.addEventListener("pointerdown", stop, { passive: true });
+    track?.addEventListener("touchstart", stop, { passive: true });
     track?.addEventListener("wheel", stop, { passive: true });
     const id = window.setInterval(() => {
       if (touched.current || document.hidden) return;
@@ -101,7 +108,9 @@ export function Catalogo({
     }, 3800);
     return () => {
       window.clearInterval(id);
+      if (raf.current) cancelAnimationFrame(raf.current);
       track?.removeEventListener("pointerdown", stop);
+      track?.removeEventListener("touchstart", stop);
       track?.removeEventListener("wheel", stop);
     };
   }, [total]);
@@ -119,8 +128,11 @@ export function Catalogo({
         <div
           id="pista-productos"
           ref={trackRef}
-          onScroll={updateIndex}
-          className="no-scrollbar -mx-5 mt-9 flex snap-x snap-proximity items-start gap-5 overflow-x-auto overscroll-x-contain px-5 pb-4 [mask-image:linear-gradient(to_right,#000_88%,transparent_100%)] lg:mx-0 lg:px-1"
+          onScroll={handleScroll}
+          onTouchStart={() => {
+            touched.current = true;
+          }}
+          className="no-scrollbar -mx-5 mt-9 flex snap-x snap-proximity scroll-px-5 items-start gap-5 overflow-x-auto px-5 pb-4 lg:mx-0 lg:px-1 lg:scroll-px-1"
         >
           {products.map((p, i) => {
             const grams = p.details.find(
@@ -130,7 +142,7 @@ export function Catalogo({
               <Reveal
                 key={p.slug}
                 delay={Math.min(i, 2) * 80}
-                className="w-[80vw] max-w-[340px] shrink-0 snap-center sm:w-[340px]"
+                className="w-[calc(100vw-2.5rem)] max-w-[340px] shrink-0 snap-center sm:w-[340px]"
               >
                 <article data-buy={p.slug} className="card flex h-auto flex-col overflow-hidden">
                   {p.main_image && (
@@ -247,6 +259,181 @@ export function Catalogo({
         </div>
       </div>
     </section>
+  );
+}
+
+/* ---------- Reseñas: opiniones reales, carrusel minimalista ---------- */
+export function Resenas({ reviews }: { reviews: Review[] }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const raf = useRef(0);
+  const [index, setIndex] = useState(0);
+  const total = reviews.length;
+
+  if (total === 0) return null;
+
+  function cardStep(): number {
+    const track = trackRef.current;
+    const first = track?.children[0] as HTMLElement | undefined;
+    return (first?.offsetWidth ?? 320) + 20;
+  }
+
+  function handleScroll() {
+    if (raf.current) return;
+    raf.current = requestAnimationFrame(() => {
+      raf.current = 0;
+      const track = trackRef.current;
+      if (!track) return;
+      const next = Math.min(total - 1, Math.max(0, Math.round(track.scrollLeft / cardStep())));
+      setIndex((prev) => (prev === next ? prev : next));
+    });
+  }
+
+  function go(dir: 1 | -1) {
+    trackRef.current?.scrollBy({ left: dir * cardStep(), behavior: "smooth" });
+  }
+
+  return (
+    <section id="resenas" className="relative overflow-hidden py-12 md:py-16">
+      <div className="relative mx-auto max-w-6xl px-5 lg:px-8">
+        <Reveal className="mx-auto max-w-2xl text-center">
+          <p className="eyebrow">Opiniones de clientas</p>
+          <h2 className="mt-4 font-serif text-3xl font-bold leading-tight text-cocoa-900 md:text-[40px]">
+            Reseñas de Cutis Radiante 7D
+          </h2>
+          <p className="mt-3 text-[15px] leading-relaxed text-cocoa-800/70">
+            Lo que opinan quienes ya lo probaron.
+          </p>
+        </Reveal>
+
+        <div className="relative">
+          <div
+            ref={trackRef}
+            onScroll={handleScroll}
+            className="no-scrollbar -mx-5 mt-9 flex snap-x snap-proximity scroll-px-5 items-stretch gap-5 overflow-x-auto px-5 pb-4 lg:mx-0 lg:px-1 lg:scroll-px-1"
+          >
+            {reviews.map((rv, i) => (
+              <Reveal
+                key={rv.id}
+                delay={Math.min(i, 2) * 80}
+                className="w-[calc(100vw-2.5rem)] max-w-[330px] shrink-0 snap-center sm:w-[330px]"
+              >
+                <ReviewCard review={rv} />
+              </Reveal>
+            ))}
+          </div>
+
+          {total > 1 && (
+            <div className="mt-3 flex items-center justify-center gap-3">
+              <button
+                onClick={() => go(-1)}
+                aria-label="Reseña anterior"
+                className="grid h-10 w-10 place-items-center rounded-full border border-brand-200 bg-white/85 text-base text-cocoa-900 shadow-card backdrop-blur transition hover:text-brand-600 active:scale-90"
+              >
+                ←
+              </button>
+              <div className="glass flex items-center gap-2.5 rounded-full px-4 py-2.5">
+                <div className="flex items-center gap-1.5" aria-hidden>
+                  {reviews.map((rv, d) => (
+                    <span
+                      key={rv.id}
+                      className={`h-1.5 rounded-full transition-all duration-300 ${
+                        d === index ? "w-5 bg-brand-500" : "w-1.5 bg-brand-200"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-xs font-bold tabular-nums text-cocoa-900" aria-live="polite">
+                  {index + 1} de {total}
+                </span>
+              </div>
+              <button
+                onClick={() => go(1)}
+                aria-label="Siguiente reseña"
+                className="grid h-10 w-10 place-items-center rounded-full border border-brand-200 bg-white/85 text-base text-cocoa-900 shadow-card backdrop-blur transition hover:text-brand-600 active:scale-90"
+              >
+                →
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ReviewCard({ review }: { review: Review }) {
+  const [photoIdx, setPhotoIdx] = useState(0);
+  const photos = (review.photos ?? []).slice(0, 6);
+  const current = photos[Math.min(photoIdx, Math.max(0, photos.length - 1))] ?? "";
+
+  return (
+    <article className="card flex h-full flex-col overflow-hidden">
+      {current ? (
+        <div className="photo-frame m-2 mb-0 aspect-[4/5] select-none !rounded-3xl bg-blush-50 ring-1 ring-white/70">
+          <Image
+            src={current}
+            alt={`Reseña de ${review.product}`}
+            fill
+            sizes="330px"
+            className="pointer-events-none object-cover"
+            loading="lazy"
+            draggable={false}
+          />
+          {photos.length > 1 && (
+            <span className="absolute right-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-semibold tabular-nums text-cocoa-900 shadow-sm">
+              {photoIdx + 1}/{photos.length}
+            </span>
+          )}
+          {photos.length > 1 && (
+            <>
+              <button
+                onClick={() => setPhotoIdx((v) => (v - 1 + photos.length) % photos.length)}
+                aria-label="Foto anterior"
+                className="absolute left-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full bg-white/85 text-sm text-cocoa-900 shadow-card backdrop-blur transition active:scale-90"
+              >
+                ←
+              </button>
+              <button
+                onClick={() => setPhotoIdx((v) => (v + 1) % photos.length)}
+                aria-label="Siguiente foto"
+                className="absolute right-2 top-1/2 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full bg-white/85 text-sm text-cocoa-900 shadow-card backdrop-blur transition active:scale-90"
+              >
+                →
+              </button>
+            </>
+          )}
+        </div>
+      ) : null}
+
+      {photos.length > 1 && (
+        <div className="flex flex-wrap gap-2 px-4 pt-3">
+          {photos.map((src, i) => (
+            <button
+              key={`${src}-${i}`}
+              onClick={() => setPhotoIdx(i)}
+              aria-label={`Ver foto ${i + 1}`}
+              className={`relative h-11 w-11 overflow-hidden rounded-xl ring-2 transition ${
+                i === photoIdx ? "ring-cocoa-900" : "ring-transparent opacity-60"
+              }`}
+            >
+              <Image src={src} alt="" fill sizes="44px" className="object-cover" loading="lazy" />
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="flex flex-1 flex-col p-5 pt-4">
+        <p className="text-[11.5px] font-bold uppercase tracking-[0.18em] text-cocoa-800/60">
+          {review.product}
+        </p>
+        {review.description ? (
+          <p className="mt-2 text-[14.5px] leading-relaxed text-cocoa-900/85">
+            {review.description}
+          </p>
+        ) : null}
+        <p className="mt-3 border-t border-blush-100 pt-2.5 text-xs text-cocoa-800/45">Compra verificada</p>
+      </div>
+    </article>
   );
 }
 

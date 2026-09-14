@@ -32,3 +32,15 @@ export type SiteSettings = {
   instagram: string;
   footer_text: string;
 };
+
+export type Review = {
+  id: string;
+  /** Título: de qué producto es la reseña (texto libre) */
+  product: string;
+  /** Descripción: lo que pensó la clienta / contexto */
+  description: string;
+  /** Fotos de evidencia (capturas subidas por la administradora) */
+  photos: string[];
+  visible: boolean;
+  sort_order: number;
+};

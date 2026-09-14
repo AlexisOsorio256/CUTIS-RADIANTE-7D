@@ -18,6 +18,7 @@ export const ADMIN_USER = "sussy85";
 
 export const NAV_LINKS = [
   { href: "#productos", label: "Productos" },
+  { href: "#resenas", label: "Reseñas" },
   { href: "#mayoreo", label: "Mayoreo" },
   { href: "#ritual", label: "Cómo usar" },
 ];

@@ -1,5 +1,5 @@
 import tienda from "@/data/tienda.json";
-import type { Product, SiteSettings } from "@/lib/types";
+import type { Product, Review, SiteSettings } from "@/lib/types";
 import { getMetrics } from "@/lib/metrics";
 import VisitTracker from "@/components/VisitTracker";
 import Navbar from "@/components/Navbar";
@@ -7,7 +7,7 @@ import Hero from "@/components/Hero";
 import Footer from "@/components/Footer";
 import WhatsAppFloat from "@/components/WhatsAppFloat";
 import StickyBuyBar from "@/components/StickyBuyBar";
-import { Catalogo, Mayoreo, Ritual, Marquee } from "@/components/HomeSections";
+import { Catalogo, Mayoreo, Resenas, Ritual, Marquee } from "@/components/HomeSections";
 import { productLink } from "@/lib/whatsapp";
 
 export const revalidate = 60;
@@ -43,6 +43,23 @@ export default async function Home() {
   const products = (tienda.products as Record<string, unknown>[])
     .map(normalize)
     .filter((p) => p.visible)
+    .sort((a, b) => a.sort_order - b.sort_order);
+  const reviews = (
+    (Array.isArray((tienda as Record<string, unknown>).reviews)
+      ? ((tienda as Record<string, unknown>).reviews as Record<string, unknown>[])
+      : []) as Record<string, unknown>[]
+  )
+    .map(
+      (r, i): Review => ({
+        id: String(r.id ?? `r${i}`),
+        product: String(r.product ?? ""),
+        description: String(r.description ?? ""),
+        photos: Array.isArray(r.photos) ? (r.photos as string[]) : [],
+        visible: r.visible !== false,
+        sort_order: Number(r.sort_order ?? i),
+      })
+    )
+    .filter((r) => r.visible && (r.product || r.photos.length > 0))
     .sort((a, b) => a.sort_order - b.sort_order);
   const metrics = await getMetrics();
 
@@ -83,6 +100,7 @@ export default async function Home() {
         waMessage={settings.whatsapp_message}
         likes={metrics.likes}
       />
+      <Resenas reviews={reviews} />
       <Mayoreo waNumber={settings.whatsapp_number} waMessage={settings.whatsapp_message} />
       <Ritual />
       <Footer brand={settings.brand_name} />

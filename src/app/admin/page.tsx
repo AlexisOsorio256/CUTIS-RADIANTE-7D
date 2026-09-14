@@ -34,6 +34,15 @@ type Settings = {
 
 type Metrics = { visits: number; likes: Record<string, number>; totalLikes: number };
 
+type Review = {
+  id: string;
+  product: string;
+  description: string;
+  photos: string[];
+  visible: boolean;
+  sort_order: number;
+};
+
 const EMPTY = {
   name: "",
   price: "",
@@ -41,6 +50,12 @@ const EMPTY = {
   description: "",
   contenido: "",
   includes: "",
+};
+
+const EMPTY_REVIEW = {
+  product: "",
+  description: "",
+  photos: [] as string[],
 };
 
 export default function AdminPage() {
@@ -53,12 +68,17 @@ export default function AdminPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
   const [metrics, setMetrics] = useState<Metrics | null>(null);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewForm, setReviewForm] = useState(EMPTY_REVIEW);
+  const [uploadingReview, setUploadingReview] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(EMPTY);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [tab, setTab] = useState<"resumen" | "products" | "settings">("resumen");
+  const [tab, setTab] = useState<"resumen" | "products" | "reviews" | "settings">("resumen");
 
   useEffect(() => {
     fetch("/api/admin/me")
@@ -76,6 +96,11 @@ export default function AdminPage() {
     const d = await r.json();
     setProducts((d.products ?? []).sort((a: Product, b: Product) => a.sort_order - b.sort_order));
     setSettings(d.settings);
+    setReviews(
+      (Array.isArray(d.reviews) ? d.reviews : []).sort(
+        (a: Review, b: Review) => (a.sort_order ?? 0) - (b.sort_order ?? 0)
+      )
+    );
   }
 
   async function loadMetrics() {
@@ -206,6 +231,15 @@ export default function AdminPage() {
     return [...products, updated];
   }
 
+  async function persist(nextProducts: Product[], nextReviews: Review[], nextSettings: Settings | null) {
+    const r = await fetch("/api/admin/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ products: nextProducts, settings: nextSettings, reviews: nextReviews }),
+    });
+    return r;
+  }
+
   async function save(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) {
@@ -215,11 +249,7 @@ export default function AdminPage() {
     setSaving(true);
     setError("");
     setOk("");
-    const r = await fetch("/api/admin/save", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ products: buildProducts(), settings }),
-    });
+    const r = await persist(buildProducts(), reviews, settings);
     const d = await r.json().catch(() => ({}));
     setSaving(false);
     if (!r.ok) {
@@ -236,11 +266,11 @@ export default function AdminPage() {
   async function remove(id: string, name: string) {
     if (!confirm(`¿Quitar "${name}" de la página?`)) return;
     setSaving(true);
-    const r = await fetch("/api/admin/save", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ products: products.filter((p) => p.id !== id), settings }),
-    });
+    const r = await persist(
+      products.filter((p) => p.id !== id),
+      reviews,
+      settings
+    );
     setSaving(false);
     if (!r.ok) {
       const d = await r.json().catch(() => ({}));
@@ -257,11 +287,7 @@ export default function AdminPage() {
     setSaving(true);
     setError("");
     setOk("");
-    const r = await fetch("/api/admin/save", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ products, settings }),
-    });
+    const r = await persist(products, reviews, settings);
     const d = await r.json().catch(() => ({}));
     setSaving(false);
     if (!r.ok) {
@@ -269,6 +295,122 @@ export default function AdminPage() {
       return;
     }
     setOk("Guardado 💗 La página se actualiza sola en 1-2 minutos.");
+  }
+
+  /* ---------- Reseñas ---------- */
+  function startNewReview() {
+    setEditingReviewId(null);
+    setReviewForm({ ...EMPTY_REVIEW });
+    setShowReviewForm(true);
+    setError("");
+    setOk("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function startEditReview(rv: Review) {
+    setEditingReviewId(rv.id);
+    setReviewForm({
+      product: rv.product,
+      description: rv.description,
+      photos: [...(rv.photos ?? [])],
+    });
+    setShowReviewForm(true);
+    setError("");
+    setOk("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  async function uploadReviewImage(file: File) {
+    setUploadingReview(true);
+    setError("");
+    try {
+      const dataUrl = await fileToDataUrl(file);
+      const r = await fetch("/api/admin/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dataUrl }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.error ?? "No se pudo subir");
+      setReviewForm((f) => ({ ...f, photos: [...f.photos, d.path].slice(0, 6) }));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo subir la foto");
+    } finally {
+      setUploadingReview(false);
+    }
+  }
+
+  function buildReviews(): Review[] {
+    const base: Review = editingReviewId
+      ? (reviews.find((r) => r.id === editingReviewId) ?? {
+          id: editingReviewId,
+          product: "",
+          description: "",
+          photos: [],
+          visible: true,
+          sort_order: reviews.length,
+        })
+      : {
+          id: `r${Date.now()}`,
+          product: "",
+          description: "",
+          photos: [],
+          visible: true,
+          sort_order: reviews.length,
+        };
+    const updated: Review = {
+      ...base,
+      product: reviewForm.product.trim(),
+      description: reviewForm.description.trim(),
+      photos: reviewForm.photos,
+    };
+    if (editingReviewId) return reviews.map((r) => (r.id === editingReviewId ? updated : r));
+    return [...reviews, updated];
+  }
+
+  async function saveReview(e: React.FormEvent) {
+    e.preventDefault();
+    if (!reviewForm.product.trim()) {
+      setError("Escribe de qué producto es la reseña.");
+      return;
+    }
+    if (reviewForm.photos.length === 0) {
+      setError("Sube al menos 1 foto de evidencia.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    setOk("");
+    const r = await persist(products, buildReviews(), settings);
+    const d = await r.json().catch(() => ({}));
+    setSaving(false);
+    if (!r.ok) {
+      setError(d.error ?? "No se pudo guardar");
+      return;
+    }
+    setShowReviewForm(false);
+    setEditingReviewId(null);
+    setReviewForm({ ...EMPTY_REVIEW });
+    setOk("Reseña guardada. Aparece en la página principal en 1-2 minutos.");
+    loadAll();
+  }
+
+  async function removeReview(id: string) {
+    if (!confirm("¿Quitar esta reseña de la página?")) return;
+    setSaving(true);
+    const r = await persist(
+      products,
+      reviews.filter((x) => x.id !== id),
+      settings
+    );
+    setSaving(false);
+    if (!r.ok) {
+      const d = await r.json().catch(() => ({}));
+      setError(d.error ?? "No se pudo eliminar");
+      return;
+    }
+    setOk("Reseña eliminada 💗");
+    loadAll();
   }
 
   if (checking) return <Shell><p className="p-10 text-center">Cargando… 💗</p></Shell>;
@@ -346,17 +488,18 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="mt-5 flex gap-2">
+        <div className="mt-5 flex flex-wrap gap-2">
           {(
             [
               ["resumen", "📊 Resumen"],
               ["products", "💄 Productos"],
+              ["reviews", "Reseñas"],
               ["settings", "⚙️ Datos"],
             ] as const
           ).map(([t, label]) => (
             <button
               key={t}
-              onClick={() => { setTab(t); setShowForm(false); setOk(""); setError(""); if (t === "resumen") loadMetrics(); }}
+              onClick={() => { setTab(t); setShowForm(false); setShowReviewForm(false); setOk(""); setError(""); if (t === "resumen") loadMetrics(); }}
               className={`rounded-full px-4 py-2.5 text-sm font-semibold sm:px-5 ${tab === t ? "bg-cocoa-900 text-white" : "border border-blush-200 bg-white"}`}
             >
               {label}
@@ -510,6 +653,121 @@ export default function AdminPage() {
                 {saving ? "Guardando…" : "Guardar 💗"}
               </button>
               <button type="button" onClick={() => { setShowForm(false); setEditingId(null); setForm(EMPTY); }} className="btn-ghost">
+                Atrás
+              </button>
+            </div>
+          </form>
+        )}
+
+        {tab === "reviews" && !showReviewForm && (
+          <div className="mt-5 space-y-3">
+            <div className="rounded-3xl border border-blush-200 bg-white p-4 text-sm leading-relaxed text-cocoa-800/70">
+              Sube las capturas de tus clientas. Se publican solas en la página principal,
+              debajo de productos, en <b>Reseñas de Cutis Radiante 7D</b>.
+            </div>
+            {reviews.length === 0 && (
+              <p className="rounded-3xl border border-blush-200 bg-white p-5 text-center text-sm text-cocoa-800/60">
+                Aún no hay reseñas. Toca “+ Agregar reseña” para subir la primera.
+              </p>
+            )}
+            {reviews.map((rv) => (
+              <div key={rv.id} className="flex items-center gap-3 rounded-3xl border border-blush-200 bg-white p-4 shadow-sm">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {rv.photos[0] ? (
+                  <img src={rv.photos[0]} alt="" className="h-14 w-14 shrink-0 rounded-2xl object-cover" />
+                ) : (
+                  <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-blush-100 text-sm font-bold text-cocoa-800/50">
+                    {rv.photos.length}/6
+                  </span>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold text-cocoa-900">{rv.product || "Sin título"}</p>
+                  <p className="truncate text-xs text-cocoa-800/55">
+                    {rv.photos.length} de 6 fotos · {rv.description ? rv.description.slice(0, 60) : "Sin descripción"}
+                  </p>
+                </div>
+                <button onClick={() => startEditReview(rv)} className="shrink-0 rounded-full bg-brand-500 px-4 py-2 text-sm font-semibold text-white">
+                  Editar
+                </button>
+                <button onClick={() => removeReview(rv.id)} className="shrink-0 px-2 py-2 text-sm" aria-label="Eliminar reseña">
+                  🗑️
+                </button>
+              </div>
+            ))}
+            <button onClick={startNewReview} className="w-full rounded-3xl border-2 border-dashed border-brand-200 p-5 font-semibold text-brand-600">
+              + Agregar reseña
+            </button>
+          </div>
+        )}
+
+        {tab === "reviews" && showReviewForm && (
+          <form onSubmit={saveReview} className="mt-5 rounded-4xl border border-blush-200 bg-white p-6 shadow-card">
+            <h2 className="font-serif text-xl font-bold">{editingReviewId ? "Editar reseña" : "Nueva reseña"}</h2>
+
+            <label className="label mt-4">Producto</label>
+            <input
+              className="field"
+              list="productos-sugeridos"
+              value={reviewForm.product}
+              onChange={(e) => setReviewForm({ ...reviewForm, product: e.target.value })}
+              placeholder="Ej: Crema Reparadora"
+            />
+            <datalist id="productos-sugeridos">
+              {products.map((p) => (
+                <option key={p.id} value={p.name} />
+              ))}
+            </datalist>
+            <p className="hint">Elige de la lista o escribe el nombre.</p>
+
+            <label className="label mt-4">Descripción</label>
+            <textarea
+              className="field min-h-20"
+              value={reviewForm.description}
+              onChange={(e) => setReviewForm({ ...reviewForm, description: e.target.value })}
+              placeholder="Ej: En dos semanas notó su piel más luminosa."
+            />
+
+            <label className="label mt-4">Fotos ({reviewForm.photos.length}/6)</label>
+            {reviewForm.photos.length > 0 && (
+              <div className="mb-3 grid grid-cols-2 gap-2">
+                {reviewForm.photos.map((src, i) => (
+                  <div key={`${src}-${i}`} className="relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt={`Evidencia ${i + 1}`} className="h-36 w-full rounded-2xl border border-blush-200 object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setReviewForm((f) => ({ ...f, photos: f.photos.filter((_, j) => j !== i) }))}
+                      className="absolute right-2 top-2 rounded-full bg-cocoa-900/80 px-2.5 py-1 text-xs font-bold text-white"
+                      aria-label="Quitar foto"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {reviewForm.photos.length < 6 && (
+              <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-cocoa-900 px-5 py-2.5 text-sm font-semibold text-white">
+                {uploadingReview ? "Subiendo…" : "Subir foto"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) uploadReviewImage(f);
+                    e.target.value = "";
+                  }}
+                />
+              </label>
+            )}
+            <p className="hint">Sube una por una. La primera será la portada.</p>
+
+            <div className="mt-5 flex gap-3">
+              <button disabled={saving || uploadingReview} className="btn-primary flex-1 !py-3.5">
+                {saving ? "Guardando…" : "Guardar"}
+              </button>
+              <button type="button" onClick={() => { setShowReviewForm(false); setEditingReviewId(null); setReviewForm({ ...EMPTY_REVIEW }); }} className="btn-ghost">
                 Atrás
               </button>
             </div>

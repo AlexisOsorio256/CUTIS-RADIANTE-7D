@@ -179,7 +179,10 @@ body {
   position: relative;
   border-radius: 2rem;
   overflow: hidden;
-  touch-action: pan-x pan-y;
+  /* auto = el navegador decide: horizontal mueve el carrusel,
+     vertical baja la página sin trabarse desde la foto */
+  touch-action: auto;
+  overscroll-behavior: auto;
   background: linear-gradient(135deg, #fbe4eb 0%, #fdf6f7 55%, #f5e6da 100%);
   box-shadow: 0 20px 60px -18px rgba(214, 51, 108, 0.3);
 }
@@ -246,6 +249,9 @@ body {
 .no-scrollbar {
   scrollbar-width: none;
   -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  overscroll-behavior-y: auto;
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;

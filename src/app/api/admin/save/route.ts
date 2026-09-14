@@ -19,6 +19,7 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const products = Array.isArray(body?.products) ? body.products : null;
   const settings = body?.settings;
+  const rawReviews = Array.isArray(body?.reviews) ? body.reviews : [];
   if (!products || !settings || typeof settings.whatsapp_number !== "string") {
     return NextResponse.json({ error: "Datos incompletos" }, { status: 400 });
   }
@@ -47,6 +48,19 @@ export async function POST(req: Request) {
       sort_order: Number(p.sort_order ?? i),
     }));
 
+  const cleanReviews = rawReviews
+    .filter((r: Record<string, unknown>) => String(r.product ?? "").trim() || (Array.isArray(r.photos) && r.photos.length > 0))
+    .map((r: Record<string, unknown>, i: number) => ({
+      id: String(r.id ?? `r${Date.now()}-${i}`),
+      product: String(r.product ?? ""),
+      description: String(r.description ?? ""),
+      photos: Array.isArray(r.photos)
+        ? (r.photos as unknown[]).map((x) => String(x)).filter(Boolean).slice(0, 6)
+        : [],
+      visible: r.visible !== false,
+      sort_order: Number(r.sort_order ?? i),
+    }));
+
   const file = JSON.stringify(
     {
       settings: {
@@ -57,6 +71,7 @@ export async function POST(req: Request) {
         footer_text: String(settings.footer_text ?? ""),
       },
       products: clean,
+      reviews: cleanReviews,
     },
     null,
     2
