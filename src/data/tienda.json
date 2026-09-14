@@ -16,11 +16,23 @@
       "price": 180,
       "compare_price": null,
       "main_image": "/images/crema-reparadora-real.jpg",
-      "gallery": ["/images/crema-reparadora-etiqueta.jpg"],
+      "gallery": [
+        "/images/crema-reparadora-etiqueta.jpg"
+      ],
       "benefits": [],
-      "ingredients": ["Sebo de res", "Miel de manuka", "Vitamina E", "Aceite de rosa mosqueta"],
+      "ingredients": [
+        "Sebo de res",
+        "Miel de manuka",
+        "Vitamina E",
+        "Aceite de rosa mosqueta"
+      ],
       "how_to_use": [],
-      "details": [{ "label": "Contenido", "value": "25 g" }],
+      "details": [
+        {
+          "label": "Contenido",
+          "value": "25 g"
+        }
+      ],
       "includes": [],
       "cta_label": "Mándame mensaje",
       "wa_message": "",
@@ -41,7 +53,12 @@
       "benefits": [],
       "ingredients": [],
       "how_to_use": [],
-      "details": [{ "label": "Contenido", "value": "50 g" }],
+      "details": [
+        {
+          "label": "Contenido",
+          "value": "50 g"
+        }
+      ],
       "includes": [],
       "cta_label": "Mándame mensaje",
       "wa_message": "",
@@ -62,7 +79,12 @@
       "benefits": [],
       "ingredients": [],
       "how_to_use": [],
-      "details": [{ "label": "Contenido", "value": "50 g" }],
+      "details": [
+        {
+          "label": "Contenido",
+          "value": "50 g"
+        }
+      ],
       "includes": [],
       "cta_label": "Mándame mensaje",
       "wa_message": "",
@@ -83,7 +105,12 @@
       "benefits": [],
       "ingredients": [],
       "how_to_use": [],
-      "details": [{ "label": "Contenido", "value": "100 g" }],
+      "details": [
+        {
+          "label": "Contenido",
+          "value": "100 g"
+        }
+      ],
       "includes": [],
       "cta_label": "Mándame mensaje",
       "wa_message": "",
@@ -104,7 +131,12 @@
       "benefits": [],
       "ingredients": [],
       "how_to_use": [],
-      "details": [{ "label": "Contenido", "value": "125 g" }],
+      "details": [
+        {
+          "label": "Contenido",
+          "value": "125 g"
+        }
+      ],
       "includes": [],
       "cta_label": "Mándame mensaje",
       "wa_message": "",
@@ -125,7 +157,12 @@
       "benefits": [],
       "ingredients": [],
       "how_to_use": [],
-      "details": [{ "label": "Presentación", "value": "Kit de 5 piezas" }],
+      "details": [
+        {
+          "label": "Presentación",
+          "value": "Kit de 5 piezas"
+        }
+      ],
       "includes": [
         "🧴 Exfoliante Aclarante de Arroz · 50 g",
         "🧼 Jabón · 100 g",
@@ -140,5 +177,16 @@
       "sort_order": 6
     }
   ],
-  "reviews": []
+  "reviews": [
+    {
+      "id": "r1789416836668",
+      "product": "Crema Reparadora",
+      "description": "Sussy",
+      "photos": [
+        "/images/1789416833501-cgkg7.jpg"
+      ],
+      "visible": true,
+      "sort_order": 0
+    }
+  ]
 }
