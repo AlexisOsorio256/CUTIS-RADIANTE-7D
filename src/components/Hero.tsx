@@ -59,9 +59,6 @@ export default function Hero({ brand, waNumber, waMessage }: Props) {
             <h2 className="mt-1.5 text-center font-serif text-[22px] font-bold leading-snug text-cocoa-900 md:text-2xl">
               ✨ Crema Cutis Radiante 7D — Reparadora 💗
             </h2>
-            <p className="mx-auto mt-2.5 w-fit rounded-full bg-brand-50 px-4 py-1 text-center text-[13.5px] font-bold text-cocoa-900/85">
-              ✅ Para todo tipo de piel ✨
-            </p>
             <p className="mt-4 text-[15px] leading-relaxed text-cocoa-800/85 md:text-base">
               Es una crema nutritiva e hidratante 💛
             </p>
