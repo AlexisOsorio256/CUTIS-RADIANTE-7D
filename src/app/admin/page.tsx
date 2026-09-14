@@ -248,7 +248,21 @@ export default function AdminPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ products: nextProducts, settings: nextSettings, reviews: nextReviews }),
     });
-    return r;
+    const data = await r.json().catch(() => ({}));
+    return { ok: r.ok, data };
+  }
+
+  /* Aplica lo que el servidor confirma como guardado. No se usa loadAll()
+     aquí porque en producción /api/admin/data tarda 1-2 min en reflejar
+     el cambio (espera el redespliegue) y traería datos viejos de vuelta. */
+  function applySaved(data: { products?: Product[]; reviews?: Review[]; settings?: Settings }) {
+    if (Array.isArray(data.products)) {
+      setProducts([...data.products].sort((a, b) => a.sort_order - b.sort_order));
+    }
+    if (Array.isArray(data.reviews)) {
+      setReviews([...data.reviews].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)));
+    }
+    if (data.settings) setSettings(data.settings);
   }
 
   async function save(e: React.FormEvent) {
@@ -260,37 +274,36 @@ export default function AdminPage() {
     setSaving(true);
     setError("");
     setOk("");
-    const r = await persist(buildProducts(), reviews, settings);
-    const d = await r.json().catch(() => ({}));
+    const sentProducts = buildProducts();
+    const { ok, data } = await persist(sentProducts, reviews, settings);
     setSaving(false);
-    if (!r.ok) {
-      setError(d.error ?? "No se pudo guardar");
+    if (!ok) {
+      setError(data.error ?? "No se pudo guardar");
       return;
     }
+    applySaved(data);
     setShowForm(false);
     setEditingId(null);
     setForm(EMPTY);
     setProductPreview("");
     setOk("Guardado 💗 La página se actualiza sola en 1-2 minutos.");
-    loadAll();
   }
 
   async function remove(id: string, name: string) {
     if (!confirm(`¿Quitar "${name}" de la página?`)) return;
     setSaving(true);
-    const r = await persist(
+    const { ok, data } = await persist(
       products.filter((p) => p.id !== id),
       reviews,
       settings
     );
     setSaving(false);
-    if (!r.ok) {
-      const d = await r.json().catch(() => ({}));
-      setError(d.error ?? "No se pudo eliminar");
+    if (!ok) {
+      setError(data.error ?? "No se pudo eliminar");
       return;
     }
+    applySaved(data);
     setOk("Eliminado 💗 La página se actualiza sola en 1-2 minutos.");
-    loadAll();
   }
 
   async function saveSettings(e: React.FormEvent) {
@@ -299,13 +312,13 @@ export default function AdminPage() {
     setSaving(true);
     setError("");
     setOk("");
-    const r = await persist(products, reviews, settings);
-    const d = await r.json().catch(() => ({}));
+    const { ok, data } = await persist(products, reviews, settings);
     setSaving(false);
-    if (!r.ok) {
-      setError(d.error ?? "No se pudo guardar");
+    if (!ok) {
+      setError(data.error ?? "No se pudo guardar");
       return;
     }
+    applySaved(data);
     setOk("Guardado 💗 La página se actualiza sola en 1-2 minutos.");
   }
 
@@ -395,36 +408,37 @@ export default function AdminPage() {
     setSaving(true);
     setError("");
     setOk("");
-    const r = await persist(products, buildReviews(), settings);
-    const d = await r.json().catch(() => ({}));
+    const sentReviews = buildReviews();
+    const { ok, data } = await persist(products, sentReviews, settings);
     setSaving(false);
-    if (!r.ok) {
-      setError(d.error ?? "No se pudo guardar");
+    if (!ok) {
+      setError(data.error ?? "No se pudo guardar");
       return;
     }
+    applySaved(data);
     setShowReviewForm(false);
     setEditingReviewId(null);
     setReviewForm({ ...EMPTY_REVIEW });
     setOk("Reseña guardada. Aparece en la página principal en 1-2 minutos.");
-    loadAll();
   }
 
   async function removeReview(id: string) {
     if (!confirm("¿Quitar esta reseña de la página?")) return;
     setSaving(true);
-    const r = await persist(
+    setError("");
+    setOk("");
+    const { ok, data } = await persist(
       products,
       reviews.filter((x) => x.id !== id),
       settings
     );
     setSaving(false);
-    if (!r.ok) {
-      const d = await r.json().catch(() => ({}));
-      setError(d.error ?? "No se pudo eliminar");
+    if (!ok) {
+      setError(data.error ?? "No se pudo eliminar");
       return;
     }
-    setOk("Reseña eliminada 💗");
-    loadAll();
+    applySaved(data);
+    setOk("Reseña eliminada.");
   }
 
   if (checking) return <Shell><p className="p-10 text-center">Cargando… 💗</p></Shell>;

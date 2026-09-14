@@ -61,15 +61,17 @@ export async function POST(req: Request) {
       sort_order: Number(r.sort_order ?? i),
     }));
 
+  const cleanedSettings = {
+    brand_name: String(settings.brand_name ?? "Cutis Radiante 7D"),
+    whatsapp_number: String(settings.whatsapp_number ?? "").replace(/\D/g, ""),
+    whatsapp_message: String(settings.whatsapp_message ?? ""),
+    instagram: String(settings.instagram ?? ""),
+    footer_text: String(settings.footer_text ?? ""),
+  };
+
   const file = JSON.stringify(
     {
-      settings: {
-        brand_name: String(settings.brand_name ?? "Cutis Radiante 7D"),
-        whatsapp_number: String(settings.whatsapp_number ?? "").replace(/\D/g, ""),
-        whatsapp_message: String(settings.whatsapp_message ?? ""),
-        instagram: String(settings.instagram ?? ""),
-        footer_text: String(settings.footer_text ?? ""),
-      },
+      settings: cleanedSettings,
       products: clean,
       reviews: cleanReviews,
     },
@@ -85,5 +87,7 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
-  return NextResponse.json({ ok: true });
+  // Se devuelven los datos ya limpios (lo que realmente quedó guardado)
+  // para que el panel los muestre de inmediato sin esperar el redespliegue.
+  return NextResponse.json({ ok: true, products: clean, reviews: cleanReviews, settings: cleanedSettings });
 }
